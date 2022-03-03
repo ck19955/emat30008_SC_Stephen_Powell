@@ -2,28 +2,37 @@
 import math
 
 
-def euler_step(x_n, t_n, step_size):
-    x_n_1 = x_n + step_size * f(t_n, x_n)
-    return x_n_1
+def euler_step(t_n, x_n, step_size):
+    x = x_n + step_size * f(t_n, x_n)
+    return x
 
 
-def solve_to(x_0, t_0, t_end, deltaT_max):
+def RK4(t_n, x_n, step_size):
+    k1 = f(t_n, x_n)
+    k2 = f(t_n + step_size/2, x_n + k1*(step_size/2))
+    k3 = f(t_n + step_size/2, x_n + k1*(step_size/2))
+    k4 = f(t_n + step_size, x_n + k3*step_size)
+    x = x_n + ((k1 + 2*k2 + 2*k3 + k4)/6)*step_size
+    return x
+
+
+def solve_to(t_0, t_end, x_0, deltaT_max):
     x = x_0
     t = t_0
     while t < t_end:
         if t + deltaT_max <= t_end:
-            x = euler_step(x, t, deltaT_max)
+            x = RK4(t, x, deltaT_max)
             t = t + deltaT_max
         else:
             deltaT_max = t_end - t
     return x
 
 
-def solve_ode(x_0, t_values, deltaT_max):
+def solve_ode(t_values, x_0, deltaT_max):
     x_values = [0] * len(t_values)
     x_values[0] = x_0
     for i in range(len(t_values)-1):
-        x_values[i+1] = solve_to(x_values[i], t_values[i], t_values[i + 1], deltaT_max)
+        x_values[i+1] = solve_to(t_values[i], t_values[i + 1], x_values[i], deltaT_max)
     return x_values
 
 

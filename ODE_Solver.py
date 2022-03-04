@@ -16,23 +16,23 @@ def RK4(t_n, x_n, step_size):
     return x
 
 
-def solve_to(t_0, t_end, x_0, deltaT_max):
+def solve_to(t_0, t_end, x_0, deltaT_max, method):
     x = x_0
     t = t_0
     while t < t_end:
         if t + deltaT_max <= t_end:
-            x = RK4(t, x, deltaT_max)
+            x = method(t, x, deltaT_max)
             t = t + deltaT_max
         else:
             deltaT_max = t_end - t
     return x
 
 
-def solve_ode(t_values, x_0, deltaT_max):
+def solve_ode(t_values, x_0, deltaT_max, method):
     x_values = [0] * len(t_values)
     x_values[0] = x_0
     for i in range(len(t_values)-1):
-        x_values[i+1] = solve_to(t_values[i], t_values[i + 1], x_values[i], deltaT_max)
+        x_values[i+1] = solve_to(t_values[i], t_values[i + 1], x_values[i], deltaT_max, method)
     return x_values
 
 

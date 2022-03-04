@@ -40,3 +40,13 @@ def f(t, x):
     return math.exp(t)
 
 
+def error_plot(t_value, predict):
+    x_value = f(t_value, 0)
+    error = predict - x_value
+    return error
+
+
+time = [0, 1]
+x_val = solve_ode(time, 1, 0.1, RK4)
+errors = error_plot(time[1], x_val[1])
+

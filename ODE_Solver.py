@@ -1,17 +1,19 @@
 # Solves ODEs
 import math
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 def euler_step(t_n, x_n, step_size):
-    x = x_n + step_size * f(t_n, x_n)
+    x = x_n + step_size * ode(t_n, x_n)
     return x
 
 
 def RK4(t_n, x_n, step_size):
-    k1 = f(t_n, x_n)
-    k2 = f(t_n + step_size/2, x_n + k1*(step_size/2))
-    k3 = f(t_n + step_size/2, x_n + k1*(step_size/2))
-    k4 = f(t_n + step_size, x_n + k3*step_size)
+    k1 = ode(t_n, x_n)
+    k2 = ode(t_n + step_size/2, x_n + k1*(step_size/2))
+    k3 = ode(t_n + step_size/2, x_n + k1*(step_size/2))
+    k4 = ode(t_n + step_size, x_n + k3*step_size)
     x = x_n + ((k1 + 2*k2 + 2*k3 + k4)/6)*step_size
     return x
 
@@ -36,17 +38,30 @@ def solve_ode(t_values, x_0, deltaT_max, method):
     return x_values
 
 
+def ode(t, x):
+    return x
+
+
 def f(t, x):
     return math.exp(t)
 
 
-def error_plot(t_value, predict):
-    x_value = f(t_value, 0)
-    error = predict - x_value
-    return error
+def error_plot(t_values, x_0):
+    x_value = f(t_values[1], 0)
+    step_sizes = np.linspace(t_values[0], t_values[-1], num=1000)[1:]
+    error_eul = np.zeros(len(step_sizes))
+    error_RK4 = np.zeros(len(step_sizes))
+    for i in range(len(step_sizes)):
+        predict_eul = solve_ode(t_values, x_0, step_sizes[i], euler_step)
+        predict_RK4 = solve_ode(t_values, x_0, step_sizes[i], RK4)
+        error_eul[i] = abs(predict_eul[-1] - x_value)
+        error_RK4[i] = abs(predict_RK4[-1] - x_value)
+    plt.loglog(step_sizes, error_eul, label='Euler Method')
+    plt.loglog(step_sizes, error_RK4, label='RK4 Method')
+    plt.show()
+    return error_eul, error_RK4
 
 
 time = [0, 1]
-x_val = solve_ode(time, 1, 0.1, RK4)
-errors = error_plot(time[1], x_val[1])
+error_1, error_2 = error_plot(time, 1)
 

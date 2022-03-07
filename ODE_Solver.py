@@ -25,7 +25,7 @@ def solve_to(t_0, t_end, x_0, deltaT_max, method):
     while t < t_end:
         if t + deltaT_max <= t_end:
             x = method(t, x, deltaT_max)
-            t = t + deltaT_max
+            t += deltaT_max
         else:
             deltaT_max = t_end - t
     return x
@@ -40,21 +40,21 @@ def solve_ode(t_values, x_0, deltaT_max, method):
 
 
 def ode(t, x):
-    x_array = np.array([x[1], -x[0]])
-    return x_array
-    #return x
+    #x_array = np.array([x[1], -x[0]])
+    #return x_array
+    return x
 
 
 def exact(t, x):
-    a = x[0]
-    b = x[1]
-    return np.array([a*math.cos(t) + b*math.sin(t), -a*math.sin(t) + b*math.cos(t)])
-    #return math.exp(t)
+    #a = x[0]
+    #b = x[1]
+    #return np.array([a*math.cos(t) + b*math.sin(t), -a*math.sin(t) + b*math.cos(t)])
+    return math.exp(t)
 
 
 def error_plot(t_values, x_0):
     x_value = exact(t_values[1], 0)
-    step_sizes = np.linspace(t_values[0], t_values[-1], num=1000)[1:]
+    step_sizes = np.logspace(-6, 0, 10)
     error_eul = np.zeros(len(step_sizes))
     error_RK4 = np.zeros(len(step_sizes))
     error_match = 1e-2
@@ -92,18 +92,22 @@ def plot_approx(t_values, x_values, step_size):
     error_RK4 = abs(RK4_values - exact_values)
     print(error_eul)
     print(error_RK4)
-    plt.plot(t_values, error_eul, label='RK4 Method')
-    plt.plot(t_values, error_RK4, label='Euler Method')
+    #plt.plot(t_values, error_eul, label='RK4 Method')
+    #plt.plot(t_values, error_RK4, label='Euler Method')
+    plt.plot([item[0] for item in exact_values], [item[1] for item in exact_values])
+    plt.plot(RK4_values[:, 0], RK4_values[:, 1])
+    plt.plot(euler_values[:, 0], euler_values[:, 1])
+
     plt.legend()
     plt.show()
     return
 
 
-times = np.linspace(0, 100, num=100)
-# times = [0, 1]
-#error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1)
+#times = np.linspace(0, 100, num=100)
+times = [0, 1]
+error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1)
 # print(time_euler)
 # print(time_RungeKutta)
-plot_approx(times, np.array([3, 4]), 0.1)
+#plot_approx(times, np.array([3, 4]), 0.1)
 #print(solve_ode(times, [3, 4], 0.1, RK4))
 #print(exact(10, [3, 4]))

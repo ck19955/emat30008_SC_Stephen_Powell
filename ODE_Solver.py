@@ -2,6 +2,7 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 
 def euler_step(t_n, x_n, step_size):
@@ -51,17 +52,29 @@ def error_plot(t_values, x_0):
     step_sizes = np.linspace(t_values[0], t_values[-1], num=1000)[1:]
     error_eul = np.zeros(len(step_sizes))
     error_RK4 = np.zeros(len(step_sizes))
+    error_match = 1e-2
+    time_eul = 0
+    time_RK4 = 0
     for i in range(len(step_sizes)):
+        init_time = time.perf_counter()
         predict_eul = solve_ode(t_values, x_0, step_sizes[i], euler_step)
+        time_1 = time.perf_counter() - init_time
         predict_RK4 = solve_ode(t_values, x_0, step_sizes[i], RK4)
+        time_2 = time.perf_counter() - init_time
         error_eul[i] = abs(predict_eul[-1] - x_value)
         error_RK4[i] = abs(predict_RK4[-1] - x_value)
+        if math.isclose(error_match, error_eul[i], abs_tol=1e-3):
+            time_eul = time_1
+        if math.isclose(error_match, error_RK4[i], abs_tol=1e-3):
+            time_RK4 = time_2
     plt.loglog(step_sizes, error_eul, label='Euler Method')
     plt.loglog(step_sizes, error_RK4, label='RK4 Method')
     plt.show()
-    return error_eul, error_RK4
+    return error_eul, error_RK4, time_eul, time_RK4
 
 
-time = [0, 1]
-error_1, error_2 = error_plot(time, 1)
+times = [0, 1]
+error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1)
+print(time_euler)
+print(time_RungeKutta)
 

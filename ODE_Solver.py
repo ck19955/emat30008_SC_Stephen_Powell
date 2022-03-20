@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import time
 
 
-def euler_step(t_n, x_n, step_size):
+def euler_step(t_n, x_n, step_size, ode, args):
     '''
     The euler_step() function executes a single step of the euler method for given value, t_n
 
@@ -18,11 +18,11 @@ def euler_step(t_n, x_n, step_size):
         x           - The new value of the dependant variable after an euler step
     '''
 
-    x = x_n + step_size * ode(t_n, x_n)
+    x = x_n + step_size * ode(t_n, x_n, *args)
     return x
 
 
-def RK4(t_n, x_n, step_size):
+def RK4(t_n, x_n, step_size,ode,args):
     '''
     The RK4() function executes a single step of the 4th Order Runge Kutta method for given value, t_n
 
@@ -34,15 +34,15 @@ def RK4(t_n, x_n, step_size):
     Returns:
         x           - The new value of the dependant variable after a RK4 step
     '''
-    k1 = ode(t_n, x_n)
-    k2 = ode(t_n + step_size/2, x_n + k1*(step_size/2))
-    k3 = ode(t_n + step_size/2, x_n + k1*(step_size/2))
-    k4 = ode(t_n + step_size, x_n + k3*step_size)
+    k1 = ode(t_n, x_n, *args)
+    k2 = ode(t_n + step_size/2, x_n + k1*(step_size/2), *args)
+    k3 = ode(t_n + step_size/2, x_n + k1*(step_size/2), *args)
+    k4 = ode(t_n + step_size, x_n + k3*step_size, *args)
     x = x_n + ((k1 + 2*k2 + 2*k3 + k4)/6)*step_size
     return x
 
 
-def solve_to(t_0, t_end, x_0, deltaT_max, method):
+def solve_to(t_0, t_end, x_0, deltaT_max, method, ode, args):
     '''
     The solve_to() function solves an ODE for an array of values of the independent variable. However, the difference
     between two subsequent values must be smaller than deltaT_max.
@@ -62,14 +62,14 @@ def solve_to(t_0, t_end, x_0, deltaT_max, method):
     t = t_0
     while t < t_end:
         if t + deltaT_max <= t_end:
-            x = method(t, x, deltaT_max)
+            x = method(t, x, deltaT_max, ode, args)
             t += deltaT_max
         else:
             deltaT_max = t_end - t
     return x
 
 
-def solve_ode(t_values, x_0, deltaT_max, method):
+def solve_ode(t_values, x_0, deltaT_max, method, ode, args):
     '''
     The solve_ode() function solves an ODE from an initial value, t_0 to a final value t_end. However, the difference
     between the two values must be smaller than deltaT_max.
@@ -88,7 +88,7 @@ def solve_ode(t_values, x_0, deltaT_max, method):
     x_values = [0] * len(t_values)
     x_values[0] = x_0
     for i in range(len(t_values)-1):
-        x_values[i+1] = solve_to(t_values[i], t_values[i + 1], x_values[i], deltaT_max, method)
+        x_values[i+1] = solve_to(t_values[i], t_values[i + 1], x_values[i], deltaT_max, method, ode, args)
     return x_values
 
 
@@ -128,7 +128,7 @@ def exact(t, x):
     #return math.exp(t)
 
 
-def error_plot(t_values, x_0):
+def error_plot(t_values, x_0, ode, args):
     '''
     The error_plot() function examines the change in error when varying the step-size for various numerical methods. In
     addition, it compares the time taken for both the euler method and fourth order runge kutta (RK4 to produce a
@@ -154,9 +154,9 @@ def error_plot(t_values, x_0):
     time_RK4 = 0
     for i in range(len(step_sizes)):
         init_time = time.perf_counter()
-        predict_eul = solve_ode(t_values, x_0, step_sizes[i], euler_step)
+        predict_eul = solve_ode(t_values, x_0, step_sizes[i], euler_step, ode, args)
         time_1 = time.perf_counter() - init_time
-        predict_RK4 = solve_ode(t_values, x_0, step_sizes[i], RK4)
+        predict_RK4 = solve_ode(t_values, x_0, step_sizes[i], RK4, ode, args)
         time_2 = time.perf_counter() - init_time
         error_eul[i] = abs(predict_eul[-1] - x_value)
         error_RK4[i] = abs(predict_RK4[-1] - x_value)
@@ -174,7 +174,7 @@ def error_plot(t_values, x_0):
     return error_eul, error_RK4, time_eul, time_RK4
 
 
-def plot_approx(t_values, x_values, step_size):
+def plot_approx(t_values, x_values, step_size, ode, args):
     '''
     The plot_approx() function plots the numerical solutions from the numerical methods.
 
@@ -184,9 +184,9 @@ def plot_approx(t_values, x_values, step_size):
         step_size       - The step-size of the numerical methods to be executed
     '''
 
-    RK4_values = np.asarray(solve_ode(t_values, x_values, step_size, RK4))
+    RK4_values = np.asarray(solve_ode(t_values, x_values, step_size, RK4, ode, args))
     print(RK4_values)
-    euler_values = np.asarray(solve_ode(t_values, x_values, step_size, euler_step))
+    euler_values = np.asarray(solve_ode(t_values, x_values, step_size, euler_step, ode, args))
     print(euler_values)
 
     exact_values = []
@@ -208,9 +208,9 @@ def plot_approx(t_values, x_values, step_size):
     return
 
 
-times1 = np.linspace(0, 20, num=50)
-times = [0, 1]
+#times1 = np.linspace(0, 20, num=50)
+#times = [0, 1]
 #error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1)
-plot_approx(times1, np.array([3, 4]), 0.1)
+#plot_approx(times1, np.array([3, 4]), 0.1, ode, args)
 # print(solve_ode(times, [3, 4], 0.1, RK4))
 # print(exact(10, [3, 4]))

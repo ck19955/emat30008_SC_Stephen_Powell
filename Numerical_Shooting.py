@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from ODE_Solver import *
+from scipy.signal import argrelextrema
 
 
 def ode_num(t, x_values, a, b, d):
@@ -10,6 +11,34 @@ def ode_num(t, x_values, a, b, d):
     return x_array
 
 
+def isolate_orbit(ode_data, time_data):
+    x_data = ode_data[:, 0]
+    y_data = ode_data[:, 1]
+    maximums = argrelextrema(x_data, np.greater)[0]
+    previous_value = False
+    previous_time = 0
+    for i in maximums:
+        if previous_value:
+            if math.isclose(x_data[i], previous_value, abs_tol=1e-4):
+                period = time_data[i] - previous_time
+                return x_data[i], y_data[i], period
+        previous_value = x_data[i]
+        previous_time = time_data[i]
+    return
+
+
+times1 = np.linspace(0, 200, num=1000)
+RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.2, 0.1])))
+print(isolate_orbit(RK4_values, times1))
+
+
+plt.plot(times1, RK4_values[:, 0])
+plt.plot(times1, RK4_values[:, 1])
+plt.xlabel('time')
+plt.ylabel('u')
+plt.show()
+
+'''
 fig, axs = plt.subplots(2, 2)
 times1 = np.linspace(0, 200, num=1000)
 RK4_values_1 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.15, 0.1])))
@@ -37,6 +66,7 @@ for ax in axs.flat:
 for ax in axs.flat:
     ax.label_outer()
 plt.show()
+'''
 
 
 

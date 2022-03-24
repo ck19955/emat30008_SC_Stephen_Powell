@@ -2,7 +2,7 @@ import math
 import numpy as np
 
 
-def ode(t, x):
+def ode_first_order(t, x):
     return x
 
 
@@ -29,15 +29,29 @@ def pred_prey(t, x_values, a, b, d):
     return x_array
 
 
-def hopf_bif(t, x_values, beta, sigma):
+def hopf_bif(t, x_values, beta):
     x = x_values[0]
     y = x_values[1]
-    sigma = -1
-    x_array = np.array([beta*x - y + sigma*x*(x**2 + y**2), x + beta*y + sigma*y*(x**2 + y**2)])
+    x_array = np.array([beta*x - y - x*(x**2 + y**2), x + beta*y - y*(x**2 + y**2)])
     return x_array
 
 
 def exact_hopf_bif(t, x_values, beta, theta):
     x_array = np.array([(beta**0.5)*math.cos(t + theta), (beta**0.5)*math.sin(t + theta)])
     return x_array
+
+
+def alg_cubic(t, x, c):
+    return x**3 - x + c
+
+
+def mod_hopf_bif(t, x_values, beta):
+    x = x_values[0]
+    y = x_values[1]
+    x_array = np.array([beta*x - y + x*(x**2 + y**2) - x*(x**2 + y**2)**2,
+                        x + beta*y + y*(x**2 + y**2) - y*(x**2 + y**2)**2])
+    return x_array
+
+
+
 

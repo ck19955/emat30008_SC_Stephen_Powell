@@ -29,25 +29,48 @@ def isolate_orbit(ode_data, time_data):
     return
 
 
-def shooting_conditions(u0, args):
+def shooting_conditions(ode, u0, args):
     x0 = u0[:-1]
     t0 = u0[-1]
-    sol = solve_ivp(ode_num, (0,t0), x0, max_step=1e-2, args=args)
-    x_condition = x0 - sol.y[:,-1]
-    t_condition = np.asarray(ode_num(t0,x0,*args)[0])
+    sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)
+    x_condition = x0 - sol.y[:, -1]
+    t_condition = np.asarray(ode(t0, x0, *args)[0])
     g_condition = np.concatenate((x_condition, t_condition), axis=None)
+    print('a')
     return g_condition
 
+
+def shooting(ode, u0, args):
+    """"
+    A function that uses numerical shooting to find limit cycles of a specified ODE.
+
+    Parameters
+    ode : function
+        The ODE to apply shooting to. The ode function should take arguments for the independent variable, dependant
+        variable and constants, and return the right-hand side of the ODE as a numpy.array.
+    u0 : numpy.array
+        An initial guess at the initial values for the limit cycle.
+
+    Returns
+    Returns a numpy.array containing the corrected initial values
+    for the limit cycle. If the numerical root finder failed, the
+    returned array is empty.
+    """
+    final = fsolve(lambda x: shooting_conditions(ode, x, args=args), u0)
+    print(final)
+    return final
+
+
+args = np.array([1, 0.2, 0.1])
+print(shooting(ode_num, np.array([1, 1, 20]), args))
+
+
+'''
+# Plots the solved ODE
 
 times1 = np.linspace(0, 200, num=1000)
 RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.2, 0.1])))
 print(isolate_orbit(RK4_values, times1))
-args = np.array([1, 0.2, 0.1])
-final = fsolve(shooting_conditions, np.array([1, 1, 20]), args=args)
-print(final)
-
-
-'''
 plt.plot(times1, RK4_values[:, 0])
 plt.plot(times1, RK4_values[:, 1])
 plt.xlabel('time')
@@ -56,6 +79,8 @@ plt.show()
 '''
 
 '''
+# Plots the solved ODE with varying b values
+
 fig, axs = plt.subplots(2, 2)
 times1 = np.linspace(0, 200, num=1000)
 RK4_values_1 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.15, 0.1])))

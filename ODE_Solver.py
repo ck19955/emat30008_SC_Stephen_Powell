@@ -6,7 +6,7 @@ import time
 
 
 def euler_step(t_n, x_n, step_size, ode, args):
-    '''
+    """
     The euler_step() function executes a single step of the euler method for given value, t_n
 
     Parameters:
@@ -16,14 +16,14 @@ def euler_step(t_n, x_n, step_size, ode, args):
 
     Returns:
         x           - The new value of the dependant variable after an euler step
-    '''
+    """
 
     x = x_n + step_size * ode(t_n, x_n, *args)
     return x
 
 
 def RK4(t_n, x_n, step_size,ode,args):
-    '''
+    """
     The RK4() function executes a single step of the 4th Order Runge Kutta method for given value, t_n
 
     Parameters:
@@ -33,7 +33,7 @@ def RK4(t_n, x_n, step_size,ode,args):
 
     Returns:
         x           - The new value of the dependant variable after a RK4 step
-    '''
+    """
     k1 = ode(t_n, x_n, *args)
     k2 = ode(t_n + step_size/2, x_n + k1*(step_size/2), *args)
     k3 = ode(t_n + step_size/2, x_n + k1*(step_size/2), *args)
@@ -43,7 +43,7 @@ def RK4(t_n, x_n, step_size,ode,args):
 
 
 def solve_to(t_0, t_end, x_0, deltaT_max, method, ode, args):
-    '''
+    """
     The solve_to() function solves an ODE for an array of values of the independent variable. However, the difference
     between two subsequent values must be smaller than deltaT_max.
 
@@ -56,7 +56,7 @@ def solve_to(t_0, t_end, x_0, deltaT_max, method, ode, args):
 
     Returns:
         x           - The final value of the dependant variable
-    '''
+    """
 
     x = x_0
     t = t_0
@@ -70,7 +70,7 @@ def solve_to(t_0, t_end, x_0, deltaT_max, method, ode, args):
 
 
 def solve_ode(t_values, x_0, deltaT_max, method, ode, args):
-    '''
+    """
     The solve_ode() function solves an ODE from an initial value, t_0 to a final value t_end. However, the difference
     between the two values must be smaller than deltaT_max.
 
@@ -83,7 +83,7 @@ def solve_ode(t_values, x_0, deltaT_max, method, ode, args):
 
     Returns:
         x           - The final value of the dependant variable
-    '''
+    """
 
     x_values = [0] * len(t_values)
     x_values[0] = x_0
@@ -93,7 +93,7 @@ def solve_ode(t_values, x_0, deltaT_max, method, ode, args):
 
 
 def ode(t, x):
-    '''
+    """
     The ode() function gives the equation of the ODE that will be analysed
 
     Parameters:
@@ -102,7 +102,7 @@ def ode(t, x):
 
     Returns:
         x           - The value of the differential of the dependant variable
-    '''
+    """
 
     x_array = np.array([x[1], -x[0]])
     return x_array
@@ -111,7 +111,7 @@ def ode(t, x):
 
 
 def exact(t, x):
-    '''
+    """
     The exact() function calculates the exact value of the dependant variable given the value of x and t
 
     Parameters:
@@ -120,7 +120,7 @@ def exact(t, x):
 
     Returns:
         The exact value of the dependant variable using analytical methods
-    '''
+    """
 
     a = x[0]
     b = x[1]
@@ -129,7 +129,7 @@ def exact(t, x):
 
 
 def error_plot(t_values, x_0, ode, args):
-    '''
+    """
     The error_plot() function examines the change in error when varying the step-size for various numerical methods. In
     addition, it compares the time taken for both the euler method and fourth order runge kutta (RK4 to produce a
     solution to the ODE with the same magnitude of error.
@@ -143,7 +143,7 @@ def error_plot(t_values, x_0, ode, args):
         error_RK4           - The array of errors for the RK4 method at each step-size value
         time_eul            - The time take for the euler method to reach an error specified in the function
         time_RK4            - The time take for the RK4 method to reach an error specified in the function
-    '''
+    """
 
     x_value = exact(t_values[1], 0)
     step_sizes = np.logspace(-6, 0, 10)
@@ -175,14 +175,14 @@ def error_plot(t_values, x_0, ode, args):
 
 
 def plot_approx(t_values, x_values, step_size, ode, args):
-    '''
+    """
     The plot_approx() function plots the numerical solutions from the numerical methods.
 
     Parameters:
         t_values        - The range of values of the independent variable
         x_values        - The initial values of the dependant variables
         step_size       - The step-size of the numerical methods to be executed
-    '''
+    """
 
     RK4_values = np.asarray(solve_ode(t_values, x_values, step_size, RK4, ode, args))
     print(RK4_values)

@@ -3,17 +3,6 @@ import numpy as np
 
 
 def ode(t, x):
-    """
-    The ode() function gives the equation of the ODE that will be analysed
-
-    Parameters:
-        t         - The value of the independent variable
-        x         - The value of the dependant variable
-
-    Returns:
-        x           - The value of the differential of the dependant variable
-    """
-
     return x
 
 
@@ -22,21 +11,11 @@ def ode_second_order(t, x):
     return x_array
 
 
-def exact(t, x):
-    """
-    The exact() function calculates the exact value of the dependant variable given the value of x and t
-
-    Parameters:
-        t             - The value of the independent variable
-        x             - The value of the dependant variable
-
-    Returns:
-        The exact value of the dependant variable using analytical methods
-    """
-
-    a = x[0]
-    b = x[1]
-    return np.array([a*math.cos(t) + b*math.sin(t), -a*math.sin(t) + b*math.cos(t)])
+def exact_second_order(t, x):
+    x = x[0]
+    y = x[1]
+    x_array = np.array([x*math.cos(t) + y*math.sin(t), -x*math.sin(t) + y*math.cos(t)])
+    return x_array
 
 
 def exponential(t, x):
@@ -56,3 +35,9 @@ def hopf_bif(t, x_values, beta, sigma):
     sigma = -1
     x_array = np.array([beta*x - y + sigma*x*(x**2 + y**2), x + beta*y + sigma*y*(x**2 + y**2)])
     return x_array
+
+
+def exact_hopf_bif(t, x_values, beta, theta):
+    x_array = np.array([(beta**0.5)*math.cos(t + theta), (beta**0.5)*math.sin(t + theta)])
+    return x_array
+

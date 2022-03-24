@@ -8,6 +8,12 @@ from function_examples import *
 
 
 def isolate_orbit(ode_data, time_data):
+    """
+    :param ode_data: Data created by an ODE solver (currently set as RK4)
+    :param time_data: A linspace of time which the function will search over to find an orbit
+    :return: If an orbit is found returns [initial x value, initial y value, time period] for the orbit
+            else returns None
+    """
     x_data = ode_data[:, 0]
     y_data = ode_data[:, 1]
     maximums = argrelextrema(x_data, np.greater)[0]
@@ -24,6 +30,12 @@ def isolate_orbit(ode_data, time_data):
 
 
 def shooting_conditions(ode, u0, args):
+    """
+    :param ode: ODE to find orbit for
+    :param u0: initial conditions
+    :param args: Arguments for the ODE
+    :return: The augmented equation suitable for fsolve()
+    """
     x0 = u0[:-1]
     t0 = u0[-1]
     sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)
@@ -54,6 +66,12 @@ def shooting(ode, u0, args):
 
 
 def plot_function(u0, step_size, solver):
+    """
+    :param u0: Initial values
+    :param step_size: maximum step-size for the solver
+    :param solver: chosen solver (not yet implemented, currently set RK4 as default)
+    :return: Plot of the isolated orbit found by the numerical shooter
+    """
     x0 = u0[:-1]
     t0 = u0[-1]
     times = np.linspace(0, t0, num=1000)
@@ -65,6 +83,7 @@ def plot_function(u0, step_size, solver):
     plt.show()
 
 
+'''
 # args = np.array([1, -1])
 args = np.array([1, 0.2, 0.1])
 #print(shooting(pred_prey, np.array([1, 1, 20]), args))
@@ -76,7 +95,7 @@ times1 = np.linspace(0, 400, num=1000)
 RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, pred_prey, args))
 init_vals = isolate_orbit(RK4_values, times1)
 plot_function(init_vals, 0.1, 0)
-
+'''
 
 '''
 # Plots the solved ODE with varying b values

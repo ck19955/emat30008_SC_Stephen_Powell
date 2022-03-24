@@ -92,6 +92,7 @@ def solve_ode(t_values, x_0, deltaT_max, method, ode, args):
     return x_values
 
 
+'''
 def ode(t, x):
     """
     The ode() function gives the equation of the ODE that will be analysed
@@ -126,9 +127,10 @@ def exact(t, x):
     b = x[1]
     return np.array([a*math.cos(t) + b*math.sin(t), -a*math.sin(t) + b*math.cos(t)])
     #return math.exp(t)
+'''
 
 
-def error_plot(t_values, x_0, ode, args):
+def error_plot(t_values, x_0, ode, exact, args):
     """
     The error_plot() function examines the change in error when varying the step-size for various numerical methods. In
     addition, it compares the time taken for both the euler method and fourth order runge kutta (RK4 to produce a
@@ -174,7 +176,7 @@ def error_plot(t_values, x_0, ode, args):
     return error_eul, error_RK4, time_eul, time_RK4
 
 
-def plot_approx(t_values, x_values, step_size, ode, args):
+def plot_approx(t_values, x_values, step_size, ode, exact, args):
     """
     The plot_approx() function plots the numerical solutions from the numerical methods.
 

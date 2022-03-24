@@ -7,13 +7,6 @@ from scipy.optimize import fsolve
 from function_examples import *
 
 
-def ode_num(t, x_values, a, b, d):
-    x = x_values[0]
-    y = x_values[1]
-    x_array = np.array([x*(1-x) - (a*x*y)/(d+x), b*y*(1-(y/x))])
-    return x_array
-
-
 def isolate_orbit(ode_data, time_data):
     x_data = ode_data[:, 0]
     y_data = ode_data[:, 1]
@@ -37,7 +30,6 @@ def shooting_conditions(ode, u0, args):
     x_condition = x0 - sol.y[:, -1]
     t_condition = np.asarray(ode(t0, x0, *args)[0])
     g_condition = np.concatenate((x_condition, t_condition), axis=None)
-    print('a')
     return g_condition
 
 
@@ -58,25 +50,32 @@ def shooting(ode, u0, args):
     returned array is empty.
     """
     final = fsolve(lambda x: shooting_conditions(ode, x, args=args), u0)
-    print(final)
     return final
 
 
-args = np.array([1, -1])
-print(shooting(hopf_bif, np.array([1, 1, 20]), args))
+def plot_function(u0, step_size, solver):
+    x0 = u0[:-1]
+    t0 = u0[-1]
+    times = np.linspace(0, t0, num=1000)
+    data_values = np.asarray(solve_ode(times, x0, step_size, RK4, pred_prey, args))
+    plt.plot(times, data_values[:, 0])
+    plt.plot(times, data_values[:, 1])
+    plt.xlabel('time')
+    plt.ylabel('u')
+    plt.show()
 
+
+# args = np.array([1, -1])
+args = np.array([1, 0.2, 0.1])
+#print(shooting(pred_prey, np.array([1, 1, 20]), args))
 
 
 # Plots the solved ODE
-
-times1 = np.linspace(0, 10, num=1000)
-RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, hopf_bif, np.array([1, -1])))
-print(isolate_orbit(RK4_values, times1))
-plt.plot(times1, RK4_values[:, 0])
-plt.plot(times1, RK4_values[:, 1])
-plt.xlabel('time')
-plt.ylabel('u')
-plt.show()
+times1 = np.linspace(0, 400, num=1000)
+# RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
+RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, pred_prey, args))
+init_vals = isolate_orbit(RK4_values, times1)
+plot_function(init_vals, 0.1, 0)
 
 
 '''

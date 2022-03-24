@@ -4,6 +4,7 @@ from ODE_Solver import *
 from scipy.signal import argrelextrema
 from scipy.integrate import solve_ivp
 from scipy.optimize import fsolve
+from function_examples import *
 
 
 def ode_num(t, x_values, a, b, d):
@@ -61,22 +62,22 @@ def shooting(ode, u0, args):
     return final
 
 
-args = np.array([1, 0.2, 0.1])
-print(shooting(ode_num, np.array([1, 1, 20]), args))
+args = np.array([1, -1])
+print(shooting(hopf_bif, np.array([1, 1, 20]), args))
 
 
-'''
+
 # Plots the solved ODE
 
-times1 = np.linspace(0, 200, num=1000)
-RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.2, 0.1])))
+times1 = np.linspace(0, 10, num=1000)
+RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, hopf_bif, np.array([1, -1])))
 print(isolate_orbit(RK4_values, times1))
 plt.plot(times1, RK4_values[:, 0])
 plt.plot(times1, RK4_values[:, 1])
 plt.xlabel('time')
 plt.ylabel('u')
 plt.show()
-'''
+
 
 '''
 # Plots the solved ODE with varying b values

@@ -29,23 +29,37 @@ def isolate_orbit(ode_data, time_data):
     return
 
 
-def shooting_conditions(ode, u0, args):
+def shooting_conditions(ode, u0, pseudo, args):
     """
     :param ode: ODE to find orbit for
     :param u0: initial conditions
     :param args: Arguments for the ODE
     :return: The augmented equation suitable for fsolve()
     """
-    x0 = u0[:-1]
-    t0 = u0[-1]
+    if pseudo:
+        x0 = u0[:-2]
+        t0 = u0[-2]
+        vary_par = u0[-1]
+        args[pseudo[0]] = vary_par
+    else:
+        x0 = u0[:-1]
+        t0 = u0[-1]
     sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)
     x_condition = x0 - sol.y[:, -1]
     t_condition = np.asarray(ode(t0, x0, *args)[0])
-    g_condition = np.concatenate((x_condition, t_condition), axis=None)
+    if pseudo:
+        state_prediction = pseudo[1]
+        state_secant = pseudo[2]
+        param_prediction = pseudo[3]
+        param_secant = pseudo[4]
+        pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction, param_secant)
+        g_condition = np.concatenate((x_condition, t_condition, pseudo), axis=None)
+    else:
+        g_condition = np.concatenate((x_condition, t_condition), axis=None)
     return g_condition
 
 
-def shooting(ode, u0, args):
+def shooting(ode, u0, pseudo, args):
     """"
     A function that uses numerical shooting to find limit cycles of a specified ODE.
 
@@ -61,11 +75,11 @@ def shooting(ode, u0, args):
     for the limit cycle. If the numerical root finder failed, the
     returned array is empty.
     """
-    final = fsolve(lambda x: shooting_conditions(ode, x, args=args), u0)
+    final = fsolve(lambda x: shooting_conditions(ode, x, pseudo, args=args), u0)
     return final
 
 
-def plot_function(u0, step_size, solver):
+def plot_function(u0, step_size, solver, args):
     """
     :param u0: Initial values
     :param step_size: maximum step-size for the solver

@@ -48,15 +48,17 @@ def pseudo_arclength(ode, initial_guess, vary_par_index, vary_range, args):
     vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
     times = np.linspace(0, 400, num=1000)  # Range of t_values to find orbit
     RK4_values = np.asarray(solve_ode(times, initial_guess, 0.1, RK4, ode, args))
-    solution_0 = isolate_orbit(RK4_values, times)
-    u0 = np.array(solution_0)
+
+    # First known solution
+    u0 = np.array(isolate_orbit(RK4_values, times))
     p0 = vary_range[0]
 
     # Find second initial solution
     args[vary_par_index] = vary_values[1]
-    RK4_values = np.asarray(solve_ode(times, np.array(solution_0)[:-1], 0.1, RK4, ode, args))
-    solution_1 = isolate_orbit(RK4_values, times)
-    u1 = np.array(solution_1)
+    RK4_values = np.asarray(solve_ode(times, u0[:-1], 0.1, RK4, ode, args))
+
+    # Second known solution
+    u1 = np.array(isolate_orbit(RK4_values, times))
     p1 = vary_values[1]
     state_secant = u1 - u0
     predict_ui = u1 + state_secant
@@ -65,7 +67,7 @@ def pseudo_arclength(ode, initial_guess, vary_par_index, vary_range, args):
     while p1 < vary_range[1]:
         u0 = u1
         p0 = p1
-        init_vals = shooting(ode, np.append(np.array(solution_1), p1), [1, predict_ui, state_secant,
+        init_vals = shooting(ode, np.append(u1, p1), [1, predict_ui, state_secant,
                                                                         predict_pi, param_secant], args)
         print(init_vals)
         u1 = init_vals[:-1]
@@ -80,5 +82,5 @@ def pseudo_arclength(ode, initial_guess, vary_par_index, vary_range, args):
 
 
 # list_param = natural_parameter(pred_prey, np.array([1, 1]), 1, [0.1, 0.25], np.array([1, 0.1, 0.1]))
-pseudo_arclength(pred_prey, np.array([1, 1]), 1, [0.1, 0.25], np.array([1, 0.1, 0.1]))
+pseudo_arclength(pred_prey, np.array([1, 1]), 1, [0.1, 0.2], np.array([1, 0.1, 0.1]))
 # print(list_param)

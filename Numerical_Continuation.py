@@ -1,11 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from ODE_Solver import *
-from scipy.signal import argrelextrema
-from scipy.integrate import solve_ivp
-from scipy.optimize import fsolve
-from function_examples import *
-from Numerical_Shooting import *
+from ODE_Solver import RK4, solve_ode
+from function_examples import pred_prey
+from Numerical_Shooting import isolate_orbit, shooting
 
 
 def natural_parameter(ode, initial_guess, vary_par_index, vary_range, args):
@@ -33,15 +30,30 @@ def natural_parameter(ode, initial_guess, vary_par_index, vary_range, args):
         list_of_solutions.append(init_vals)
 
     return list_of_solutions
-    # Isolate an orbit with specific alpha value
-    # Find the initial conditions needed
-    # Change alpha by small increment delta
-    # Assume the intial conditions for new alpha are the same as the intital values given by previous solution
-    # Find the 'actual' initial conditions for the new value of alpha using shooter
-    # Repeat until all the alpha values are covered
 
 
 def pseudo_arclength(ode, initial_guess, vary_par_index, vary_range, args):
+    """
+    Executes a single step of the forward euler method for given value, t_n
+
+    Parameters:
+    ----------
+        ode : function
+            The ODE for which the euler step predicts
+        initial_guess : numpy array
+            The initial guess to find an orbit
+        vary_par_index : integer
+            The index of the parameter from args
+        vary_range : list
+            The lower and upper limit for the values the parameter can take
+        args : list
+            The parameters of the ODE
+
+    Returns:
+    ----------
+        x : numpy array
+            The new value of the dependant variable after an euler step
+    """
     # Find first initial solution
     args[vary_par_index] = vary_range[0]
     vary_count = 50  # Number of different variable values
@@ -68,19 +80,20 @@ def pseudo_arclength(ode, initial_guess, vary_par_index, vary_range, args):
         u0 = u1
         p0 = p1
         init_vals = shooting(ode, np.append(u1, p1), [1, predict_ui, state_secant,
-                                                                        predict_pi, param_secant], args)
-        print(init_vals)
+                                                      predict_pi, param_secant], args)
+
+        # Update current state
         u1 = init_vals[:-1]
         state_secant = u1 - u0
         predict_ui = u1 + state_secant
-
         p1 = init_vals[-1]
         param_secant = p1 - p0
         predict_pi = p1 + param_secant
+        print(init_vals)
 
     return
 
 
-# list_param = natural_parameter(pred_prey, np.array([1, 1]), 1, [0.1, 0.25], np.array([1, 0.1, 0.1]))
+list_param = natural_parameter(pred_prey, np.array([1, 1]), 1, [0.1, 0.25], np.array([1, 0.1, 0.1]))
 pseudo_arclength(pred_prey, np.array([1, 1]), 1, [0.1, 0.2], np.array([1, 0.1, 0.1]))
-# print(list_param)
+print(list_param)

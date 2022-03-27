@@ -1,10 +1,11 @@
 import numpy as np
+import math
 import matplotlib.pyplot as plt
-from ODE_Solver import *
-from scipy.signal import argrelextrema
+from ODE_Solver import RK4, solve_ode
+from scipy.signal import find_peaks
 from scipy.integrate import solve_ivp
 from scipy.optimize import fsolve
-from function_examples import *
+from function_examples import pred_prey
 
 
 def isolate_orbit(ode_data, time_data):
@@ -16,7 +17,7 @@ def isolate_orbit(ode_data, time_data):
     """
     x_data = ode_data[:, 0]
     y_data = ode_data[:, 1]
-    maximums = argrelextrema(x_data, np.greater)[0]
+    maximums = find_peaks(x_data)[0]
     previous_value = False
     previous_time = 0
     for i in maximums:
@@ -26,7 +27,7 @@ def isolate_orbit(ode_data, time_data):
                 return x_data[i], y_data[i], period
         previous_value = x_data[i]
         previous_time = time_data[i]
-    return
+    raise RuntimeError("No orbit found")
 
 
 def shooting_conditions(ode, u0, pseudo, args):
@@ -36,18 +37,15 @@ def shooting_conditions(ode, u0, pseudo, args):
     :param args: Arguments for the ODE
     :return: The augmented equation suitable for fsolve()
     """
+
     if pseudo:
         x0 = u0[:-2]
         t0 = u0[-2]
         vary_par = u0[-1]
         args[pseudo[0]] = vary_par
-    else:
-        x0 = u0[:-1]
-        t0 = u0[-1]
-    sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)
-    x_condition = x0 - sol.y[:, -1]
-    t_condition = np.asarray(ode(t0, x0, *args)[0])
-    if pseudo:
+        sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)
+        x_condition = x0 - sol.y[:, -1]
+        t_condition = np.asarray(ode(t0, x0, *args)[0])
         state_prediction = pseudo[1]
         state_secant = pseudo[2]
         param_prediction = pseudo[3]
@@ -55,6 +53,11 @@ def shooting_conditions(ode, u0, pseudo, args):
         pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction, param_secant)
         g_condition = np.concatenate((x_condition, t_condition, pseudo), axis=None)
     else:
+        x0 = u0[:-1]
+        t0 = u0[-1]
+        sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)
+        x_condition = x0 - sol.y[:, -1]
+        t_condition = np.asarray(ode(t0, x0, *args)[0])
         g_condition = np.concatenate((x_condition, t_condition), axis=None)
     return g_condition
 
@@ -89,7 +92,7 @@ def plot_function(u0, step_size, solver, args):
     x0 = u0[:-1]
     t0 = u0[-1]
     times = np.linspace(0, t0, num=1000)
-    data_values = np.asarray(solve_ode(times, x0, step_size, RK4, pred_prey, args))
+    data_values = np.asarray(solve_ode(times, x0, step_size, solver, pred_prey, args))
     plt.plot(times, data_values[:, 0])
     plt.plot(times, data_values[:, 1])
     plt.xlabel('time')

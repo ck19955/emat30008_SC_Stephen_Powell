@@ -3,19 +3,30 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+from function_examples import *
 
 
 def euler_step(t_n, x_n, step_size, ode, args):
     """
-    The euler_step() function executes a single step of the euler method for given value, t_n
+    Executes a single step of the forward euler method for given value, t_n
 
     Parameters:
-        t_n         - The value of the independent variable
-        x_n         - The value of the dependant variable
-        step_size   - The step-size of the euler step to be executed
+    ----------
+        t_n : float
+            The value of the independent variable
+        x_n : numpy array
+            The value of the dependant variable
+        step_size : integer
+            The step-size of the euler step to be executed
+        ode : function
+            The ODE for which the euler step predicts
+        args : list
+            The parameters of the ODE
 
     Returns:
-        x           - The new value of the dependant variable after an euler step
+    ----------
+        x : numpy array
+            The new value of the dependant variable after an euler step
     """
 
     x = x_n + step_size * ode(t_n, x_n, *args)
@@ -44,8 +55,7 @@ def RK4(t_n, x_n, step_size,ode,args):
 
 def solve_to(t_0, t_end, x_0, deltaT_max, method, ode, args):
     """
-    The solve_to() function solves an ODE for an array of values of the independent variable. However, the difference
-    between two subsequent values must be smaller than deltaT_max.
+    The solve_to() function solves an ODE for an array of values of the independent variable.
 
     Parameters:
         t_0         - The initial value of the independent variable
@@ -65,7 +75,7 @@ def solve_to(t_0, t_end, x_0, deltaT_max, method, ode, args):
             x = method(t, x, deltaT_max, ode, args)
             t += deltaT_max
         else:
-            deltaT_max = t_end - t
+            deltaT_max = t_end - t  # Reduces deltaT_max to fit next iteration perfectly
     return x
 
 
@@ -90,44 +100,6 @@ def solve_ode(t_values, x_0, deltaT_max, method, ode, args):
     for i in range(len(t_values)-1):
         x_values[i+1] = solve_to(t_values[i], t_values[i + 1], x_values[i], deltaT_max, method, ode, args)
     return x_values
-
-
-'''
-def ode(t, x):
-    """
-    The ode() function gives the equation of the ODE that will be analysed
-
-    Parameters:
-        t         - The value of the independent variable
-        x         - The value of the dependant variable
-
-    Returns:
-        x           - The value of the differential of the dependant variable
-    """
-
-    x_array = np.array([x[1], -x[0]])
-    return x_array
-
-    #return x
-
-
-def exact(t, x):
-    """
-    The exact() function calculates the exact value of the dependant variable given the value of x and t
-
-    Parameters:
-        t             - The value of the independent variable
-        x             - The value of the dependant variable
-
-    Returns:
-        The exact value of the dependant variable using analytical methods
-    """
-
-    a = x[0]
-    b = x[1]
-    return np.array([a*math.cos(t) + b*math.sin(t), -a*math.sin(t) + b*math.cos(t)])
-    #return math.exp(t)
-'''
 
 
 def error_plot(t_values, x_0, ode, exact, args):
@@ -158,15 +130,17 @@ def error_plot(t_values, x_0, ode, exact, args):
         init_time = time.perf_counter()
         predict_eul = solve_ode(t_values, x_0, step_sizes[i], euler_step, ode, args)
         time_1 = time.perf_counter() - init_time
+        init_time = time.perf_counter()
         predict_RK4 = solve_ode(t_values, x_0, step_sizes[i], RK4, ode, args)
         time_2 = time.perf_counter() - init_time
         error_eul[i] = abs(predict_eul[-1] - x_value)
         error_RK4[i] = abs(predict_RK4[-1] - x_value)
         if math.isclose(error_match, error_eul[i], abs_tol=1e-5):
-            print(i)
             time_eul = time_1
         if math.isclose(error_match, error_RK4[i], abs_tol=1e-5):
             time_RK4 = time_2
+
+    # Plot the errors of euler and RK4
     plt.loglog(step_sizes, error_eul, label='Euler Method')
     plt.loglog(step_sizes, error_RK4, label='RK4 Method')
     plt.legend()
@@ -187,32 +161,21 @@ def plot_approx(t_values, x_values, step_size, ode, exact, args):
     """
 
     RK4_values = np.asarray(solve_ode(t_values, x_values, step_size, RK4, ode, args))
-    print(RK4_values)
     euler_values = np.asarray(solve_ode(t_values, x_values, step_size, euler_step, ode, args))
-    print(euler_values)
-
-    exact_values = []
+    exact_values = [0]*len(RK4_values)
     for i in range(len(t_values)):
-        exact_values.append(exact(t_values[i], x_values))
+        exact_values[i] = exact(t_values[i], x_values)
 
-    error_eul = abs(euler_values - exact_values)
-    error_RK4 = abs(RK4_values - exact_values)
-    print(error_eul)
-    print(error_RK4)
-    #plt.plot(t_values, error_eul, label='RK4 Method')
-    #plt.plot(t_values, error_RK4, label='Euler Method')
+    # Plot x against dx/dt
     plt.plot([item[0] for item in exact_values], [item[1] for item in exact_values])
     plt.plot(RK4_values[:, 0], RK4_values[:, 1])
     plt.plot(euler_values[:, 0], euler_values[:, 1])
-
     plt.legend()
     plt.show()
     return
 
 
-#times1 = np.linspace(0, 20, num=50)
-#times = [0, 1]
-#error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1)
-#plot_approx(times1, np.array([3, 4]), 0.1, ode, args)
-# print(solve_ode(times, [3, 4], 0.1, RK4))
-# print(exact(10, [3, 4]))
+# times1 = np.linspace(0, 20, num=50)
+# times = [0, 1]
+# error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1, ode_first_order, exponential, [])
+# plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order, [])

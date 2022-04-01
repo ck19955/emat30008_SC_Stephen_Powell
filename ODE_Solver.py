@@ -33,7 +33,7 @@ def euler_step(t_n, x_n, step_size, ode, args):
     return x
 
 
-def RK4(t_n, x_n, step_size,ode,args):
+def RK4(t_n, x_n, step_size, ode, args):
     """
     The RK4() function executes a single step of the 4th Order Runge Kutta method for given value, t_n
 
@@ -164,7 +164,7 @@ def plot_approx(t_values, x_values, step_size, ode, exact, args):
     euler_values = np.asarray(solve_ode(t_values, x_values, step_size, euler_step, ode, args))
     exact_values = [0]*len(RK4_values)
     for i in range(len(t_values)):
-        exact_values[i] = exact(t_values[i], x_values)
+        exact_values[i] = exact(t_values[i], x_values, *args)
 
     # Plot x against dx/dt
     plt.plot([item[0] for item in exact_values], [item[1] for item in exact_values])
@@ -175,7 +175,8 @@ def plot_approx(t_values, x_values, step_size, ode, exact, args):
     return
 
 
-# times1 = np.linspace(0, 20, num=50)
+#times1 = np.linspace(0, 20, num=50)
 # times = [0, 1]
 # error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1, ode_first_order, exponential, [])
-# plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order, [])
+#plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order, [])
+#plot_approx(times1, np.array([3, 4]), 0.1, hopf_bif, exact_hopf_bif, [0.2])

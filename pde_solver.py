@@ -3,8 +3,8 @@ from math import pi
 
 # Set problem parameters/functions
 kappa = 1.0   # diffusion constant
-L=3.0         # length of spatial domain
-T=0.5         # total time to solve for
+L = 3.0         # length of spatial domain
+T = 0.5         # total time to solve for
 
 
 def u_I(x):
@@ -29,7 +29,8 @@ t = np.linspace(0, T, mt+1)     # mesh points in time
 deltax = x[1] - x[0]            # gridspacing in x
 deltat = t[1] - t[0]            # gridspacing in t
 lmbda = kappa*deltat/(deltax**2)    # mesh fourier number
-
+if not 0 < lmbda < 1/2:
+    raise RuntimeError("Invalid value for lmbda")
 # Set up the solution variables
 
 A = np.diag([1-2*lmbda] * (mx - 1)) + np.diag([lmbda] * (mx - 2), -1) + np.diag([lmbda] * (mx - 2), 1)
@@ -42,5 +43,6 @@ for i in range(len(x_vect)):
 for i in range(0, mt):
     u_vect = np.dot(A, u_vect)
 
-print(np.linalg.solve(A, u_vect[:-1]))
+print(u_vect)
+# print(np.linalg.solve(A, u_vect[:-1]))
 

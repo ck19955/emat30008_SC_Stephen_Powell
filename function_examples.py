@@ -36,7 +36,8 @@ def hopf_bif(t, u_values, beta):
     return u_array
 
 
-def exact_hopf_bif(t, u_values, beta, theta):
+def exact_hopf_bif(t, u_values, beta):
+    theta = -1
     u_array = np.array([(beta**0.5)*math.cos(t + theta), (beta**0.5)*math.sin(t + theta)])
     return u_array
 
@@ -52,3 +53,4 @@ def mod_hopf_bif(t, u_values, beta):
                         x + beta*y + y*(x**2 + y**2) - y*(x**2 + y**2)**2])
     return u_array
 
+#print(alg_cubic(0.57,0.57,2))

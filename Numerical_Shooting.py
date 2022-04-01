@@ -5,7 +5,7 @@ from ODE_Solver import RK4, solve_ode
 from scipy.signal import find_peaks
 from scipy.integrate import solve_ivp
 from scipy.optimize import fsolve
-from function_examples import pred_prey
+from function_examples import pred_prey, hopf_bif
 
 
 def isolate_orbit(ode_data, time_data):
@@ -30,7 +30,7 @@ def isolate_orbit(ode_data, time_data):
     raise RuntimeError("No orbit found")
 
 
-def shooting_conditions(ode, u0, pseudo, args):
+def shooting_conditions(ode, u0, pseudo, orbit, args):
     """
     :param ode: ODE to find orbit for
     :param u0: initial conditions
@@ -39,19 +39,26 @@ def shooting_conditions(ode, u0, pseudo, args):
     """
 
     if pseudo:
-        x0 = u0[:-2]
-        t0 = u0[-2]
-        vary_par = u0[-1]
-        args[pseudo[0]] = vary_par
-        sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)
-        x_condition = x0 - sol.y[:, -1]
-        t_condition = np.asarray(ode(t0, x0, *args)[0])
-        state_prediction = pseudo[1]
-        state_secant = pseudo[2]
-        param_prediction = pseudo[3]
-        param_secant = pseudo[4]
-        pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction, param_secant)
-        g_condition = np.concatenate((x_condition, t_condition, pseudo), axis=None)
+        state_prediction, state_secant, param_prediction, param_secant = pseudo[1:]
+        if orbit:
+            x0 = u0[:-2]
+            t0 = u0[-2]
+            vary_par = u0[-1]
+            args[pseudo[0]] = vary_par
+            sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)
+            x_condition = x0 - sol.y[:, -1]
+            t_condition = np.asarray(ode(t0, x0, *args)[0])
+            pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction,
+                                                                               param_secant)
+            g_condition = np.concatenate((x_condition, t_condition, pseudo), axis=None)
+        else:
+            x0 = u0[:-1]
+            vary_par = u0[-1]
+            args[pseudo[0]] = vary_par
+            x_condition = np.asarray(ode(0, x0, *args)[0])
+            pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction,
+                                                                                    param_secant)
+            g_condition = np.concatenate((x_condition, pseudo), axis=None)
     else:
         x0 = u0[:-1]
         t0 = u0[-1]
@@ -62,7 +69,7 @@ def shooting_conditions(ode, u0, pseudo, args):
     return g_condition
 
 
-def shooting(ode, u0, pseudo, args):
+def shooting(ode, u0, pseudo, orbit, args):
     """"
     A function that uses numerical shooting to find limit cycles of a specified ODE.
 
@@ -78,11 +85,11 @@ def shooting(ode, u0, pseudo, args):
     for the limit cycle. If the numerical root finder failed, the
     returned array is empty.
     """
-    final = fsolve(lambda x: shooting_conditions(ode, x, pseudo, args=args), u0)
+    final = fsolve(lambda x: shooting_conditions(ode, x, pseudo, orbit, args=args), u0)
     return final
 
 
-def plot_function(u0, step_size, solver, args):
+def plot_function(ode, u0, step_size, solver, args):
     """
     :param u0: Initial values
     :param step_size: maximum step-size for the solver
@@ -91,8 +98,9 @@ def plot_function(u0, step_size, solver, args):
     """
     x0 = u0[:-1]
     t0 = u0[-1]
+    print(t0)
     times = np.linspace(0, t0, num=1000)
-    data_values = np.asarray(solve_ode(times, x0, step_size, solver, pred_prey, args))
+    data_values = np.asarray(solve_ode(times, x0, step_size, solver, ode, args))
     plt.plot(times, data_values[:, 0])
     plt.plot(times, data_values[:, 1])
     plt.xlabel('time')
@@ -100,10 +108,9 @@ def plot_function(u0, step_size, solver, args):
     plt.show()
 
 
-'''
 # args = np.array([1, -1])
 args = np.array([1, 0.2, 0.1])
-#print(shooting(pred_prey, np.array([1, 1, 20]), args))
+#print(shooting(pred_prey, np.array([1, 1, 20]), False, args))
 
 
 # Plots the solved ODE
@@ -111,8 +118,20 @@ times1 = np.linspace(0, 400, num=1000)
 # RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
 RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, pred_prey, args))
 init_vals = isolate_orbit(RK4_values, times1)
-plot_function(init_vals, 0.1, 0)
-'''
+plot_function(pred_prey, init_vals, 0.1, RK4, args)
+
+
+"""
+args = np.array([0.04])
+print(shooting(hopf_bif, np.array([1, 1, 20]), False, args))
+
+# Plots the solved ODE
+times1 = np.linspace(0, 400, num=1000)
+# RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
+RK4_values = np.asarray(solve_ode(times1, np.array([0.3, 0.1]), 0.1, RK4, hopf_bif, args))
+init_vals = isolate_orbit(RK4_values, times1)
+plot_function(hopf_bif, shooting(hopf_bif, np.array([1, 1, 20]), False, args), 0.1, RK4, args)
+"""
 
 '''
 # Plots the solved ODE with varying b values
@@ -145,6 +164,3 @@ for ax in axs.flat:
     ax.label_outer()
 plt.show()
 '''
-
-
-

@@ -16,13 +16,16 @@ def natural_parameter(ode, initial_guess, vary_par_index, vary_range, orbit, arg
     :return: A list of solutions
     """
 
-    args[vary_par_index] = vary_range[0]
-    vary_count = 50  # Number of different variable values
+    vary_count = 40  # Number of different variable values
     vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
+    args[vary_par_index] = vary_values[1]
+
     if orbit:
         # Find the initial solution using isolate_orbit()
-        times = np.linspace(0, 1000, num=1000)  # Range of t_values to find orbit
-        RK4_values = np.asarray(solve_ode(times, initial_guess, 0.1, RK4, ode, args))
+        times = np.linspace(0, 100, num=1000)  # Range of t_values to find orbit
+        RK4_values = np.asarray(solve_ode(times, initial_guess, 0.01, RK4, ode, args))
+        # plt.plot(RK4_values)
+        # plt.show()
         init_vals = isolate_orbit(RK4_values, times)
         list_of_solutions = [init_vals]
     else:
@@ -41,7 +44,6 @@ def natural_parameter(ode, initial_guess, vary_par_index, vary_range, orbit, arg
         else:
             init_vals = fsolve(lambda x: ode(0, x, vary_values[i]), np.array([init_vals]))
             list_of_solutions[i] = init_vals
-        print(init_vals)
     return list_of_solutions, vary_values
 
 
@@ -118,24 +120,36 @@ def pseudo_arclength(ode, initial_guess, vary_par_index, vary_range, orbit, args
     return u_values, param_values
 
 
-#y, x = natural_parameter(alg_cubic, np.array([1]), 0, [-2, 2], False, np.array([0], dtype=float))
-list_param, param_values = natural_parameter(hopf_bif, np.array([1, 1]), 0, [0, 2], True, np.array([0], dtype=float))
-x_values = [item[0] for item in list_param]
-y_values = [item[1] for item in list_param]
-plt.plot(param_values, x_values)
-plt.plot(param_values, y_values)
-plt.show()
+if __name__ == '__main__':
+    '''
+    list_param, param_values = natural_parameter(hopf_bif, np.array([0.5, 0.5]), 0, [0, 2], True, np.array([0], dtype=float))
+    x_values = [item[0] for item in list_param]
+    y_values = [item[1] for item in list_param]
+    plt.plot(param_values, x_values)
+    plt.plot(param_values, y_values)
+    plt.show()
+'''
 
-#print(y)
-#plt.plot(x, y)
-#plt.show()
+    list_param, param_values = natural_parameter(mod_hopf_bif, np.array([0.5, 0.5]), 0, [2, -1], True, np.array([0], dtype=float))
+    x_values = [item[0] for item in list_param]
+    y_values = [item[1] for item in list_param]
+    plt.plot(param_values, x_values)
+    plt.plot(param_values, y_values)
+    plt.show()
 
-#y, x = pseudo_arclength(alg_cubic, np.array([1]), 0, [-2, 2], np.array([0], dtype=float))
-#plt.plot(x, y)
-#plt.show()
+    '''
+    y, x = natural_parameter(alg_cubic, np.array([1]), 0, [-2, 2], False, np.array([0], dtype=float))
+    print(y)
+    plt.plot(x, y)
+    plt.show()
+    
+    y, x = pseudo_arclength(alg_cubic, np.array([1]), 0, [-2, 2], False, np.array([0], dtype=float))
+    plt.plot(x, y)
+    plt.show()
+    '''
 
-# pseudo_arclength(hopf_bif, np.array([1, 1]), 0, [0, 2], np.array([0], dtype=float))
-# pseudo_arclength(pred_prey, np.array([1, 1]), 1, [0.1, 0.2], np.array([1, 0.1, 0.1]))
-print(list_param)
+    # pseudo_arclength(hopf_bif, np.array([1, 1]), 0, [0, 2], np.array([0], dtype=float))
+    # pseudo_arclength(pred_prey, np.array([1, 1]), 1, [0.1, 0.2], np.array([1, 0.1, 0.1]))
+    #print(list_param)
 
 

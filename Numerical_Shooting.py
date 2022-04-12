@@ -98,8 +98,7 @@ def plot_function(ode, u0, step_size, solver, args):
     """
     x0 = u0[:-1]
     t0 = u0[-1]
-    print(t0)
-    times = np.linspace(0, t0, num=1000)
+    times = np.linspace(0, 100, num=1000)
     data_values = np.asarray(solve_ode(times, x0, step_size, solver, ode, args))
     plt.plot(times, data_values[:, 0])
     plt.plot(times, data_values[:, 1])
@@ -108,59 +107,62 @@ def plot_function(ode, u0, step_size, solver, args):
     plt.show()
 
 
-# args = np.array([1, -1])
-args = np.array([1, 0.2, 0.1])
-#print(shooting(pred_prey, np.array([1, 1, 20]), False, args))
+if __name__ == '__main__':
+
+    '''
+    # args = np.array([1, -1])
+    args = np.array([1, 0.2, 0.1])
+    #print(shooting(pred_prey, np.array([1, 1, 20]), False, args))
+    
+    
+    # Plots the solved ODE
+    times1 = np.linspace(0, 400, num=1000)
+    # RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
+    RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, pred_prey, args))
+    init_vals = isolate_orbit(RK4_values, times1)
+    plot_function(pred_prey, init_vals, 0.1, RK4, args)
+    '''
+
+    args = np.array([0.04])
+    #print(shooting(hopf_bif, np.array([1, 1, 8]), False, False, args))
+
+    # Plots the solved ODE
+    times1 = np.linspace(0, 400, num=1000)
+    # RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
+    #RK4_values = np.asarray(solve_ode(times1, np.array([0.3, 0.1]), 0.1, RK4, hopf_bif, args))
+    #init_vals = isolate_orbit(RK4_values, times1)
+    plot_function(hopf_bif, shooting(hopf_bif, np.array([0.5, 0.5, 20]), False, True, args), 0.1, RK4, args)
 
 
-# Plots the solved ODE
-times1 = np.linspace(0, 400, num=1000)
-# RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
-RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, pred_prey, args))
-init_vals = isolate_orbit(RK4_values, times1)
-plot_function(pred_prey, init_vals, 0.1, RK4, args)
 
-
-"""
-args = np.array([0.04])
-print(shooting(hopf_bif, np.array([1, 1, 20]), False, args))
-
-# Plots the solved ODE
-times1 = np.linspace(0, 400, num=1000)
-# RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
-RK4_values = np.asarray(solve_ode(times1, np.array([0.3, 0.1]), 0.1, RK4, hopf_bif, args))
-init_vals = isolate_orbit(RK4_values, times1)
-plot_function(hopf_bif, shooting(hopf_bif, np.array([1, 1, 20]), False, args), 0.1, RK4, args)
-"""
-
-'''
-# Plots the solved ODE with varying b values
-
-fig, axs = plt.subplots(2, 2)
-times1 = np.linspace(0, 200, num=1000)
-RK4_values_1 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.15, 0.1])))
-RK4_values_2 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.25, 0.1])))
-RK4_values_3 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.27, 0.1])))
-RK4_values_4 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.5, 0.1])))
-
-
-axs[0, 0].plot(RK4_values_1[:, 0])
-axs[0, 0].plot(RK4_values_1[:, 1])
-axs[0, 0].set_title('b = 0.15')
-axs[0, 1].plot(RK4_values_2[:, 0])
-axs[0, 1].plot(RK4_values_2[:, 1])
-axs[0, 1].set_title('b = 0.25')
-axs[1, 0].plot(RK4_values_3[:, 0])
-axs[1, 0].plot(RK4_values_3[:, 1])
-axs[1, 0].set_title('b = 0.27')
-axs[1, 1].plot(RK4_values_4[:, 0])
-axs[1, 1].plot(RK4_values_4[:, 1])
-axs[1, 1].set_title('b = 0.5')
-for ax in axs.flat:
-    ax.set(xlabel='t', ylabel='u')
-
-# Hide x labels and tick labels for top plots and y ticks for right plots.
-for ax in axs.flat:
-    ax.label_outer()
-plt.show()
-'''
+    '''
+    # Plots the solved ODE with varying b values
+    
+    fig, axs = plt.subplots(2, 2)
+    times1 = np.linspace(0, 200, num=1000)
+    RK4_values_1 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.15, 0.1])))
+    RK4_values_2 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.25, 0.1])))
+    RK4_values_3 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.27, 0.1])))
+    RK4_values_4 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.5, 0.1])))
+    
+    
+    axs[0, 0].plot(RK4_values_1[:, 0])
+    axs[0, 0].plot(RK4_values_1[:, 1])
+    axs[0, 0].set_title('b = 0.15')
+    axs[0, 1].plot(RK4_values_2[:, 0])
+    axs[0, 1].plot(RK4_values_2[:, 1])
+    axs[0, 1].set_title('b = 0.25')
+    axs[1, 0].plot(RK4_values_3[:, 0])
+    axs[1, 0].plot(RK4_values_3[:, 1])
+    axs[1, 0].set_title('b = 0.27')
+    axs[1, 1].plot(RK4_values_4[:, 0])
+    axs[1, 1].plot(RK4_values_4[:, 1])
+    axs[1, 1].set_title('b = 0.5')
+    for ax in axs.flat:
+        ax.set(xlabel='t', ylabel='u')
+    
+    # Hide x labels and tick labels for top plots and y ticks for right plots.
+    for ax in axs.flat:
+        ax.label_outer()
+    plt.show()
+    '''

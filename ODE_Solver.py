@@ -175,8 +175,10 @@ def plot_approx(t_values, x_values, step_size, ode, exact, args):
     return
 
 
-#times1 = np.linspace(0, 20, num=50)
-# times = [0, 1]
-# error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1, ode_first_order, exponential, [])
-#plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order, [])
-#plot_approx(times1, np.array([3, 4]), 0.1, hopf_bif, exact_hopf_bif, [0.2])
+if __name__ == '__main__':
+    times1 = np.linspace(0, 20, num=50)
+    # times = [0, 1]
+    # error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1, ode_first_order, exponential, [])
+    #plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order, [])
+    #plot_approx(times1, np.array([3, 4]), 0.1, hopf_bif, exact_hopf_bif, [0.2])
+

@@ -53,4 +53,3 @@ def mod_hopf_bif(t, u_values, beta):
                         x + beta*y + y*(x**2 + y**2) - y*(x**2 + y**2)**2])
     return u_array
 
-#print(alg_cubic(0.57,0.57,2))

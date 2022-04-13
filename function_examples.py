@@ -1,4 +1,5 @@
 import math
+from math import pi
 import numpy as np
 
 
@@ -53,3 +54,14 @@ def mod_hopf_bif(t, u_values, beta):
                         x + beta*y + y*(x**2 + y**2) - y*(x**2 + y**2)**2])
     return u_array
 
+
+def u_I(x, l):
+    # initial temperature distribution
+    y = np.sin(pi*x/l)
+    return y
+
+
+def u_exact(x, t, k, l):
+    # the exact solution to the temperature equation
+    y = np.exp(-k*(pi**2/l**2)*t)*np.sin(pi*x/l)
+    return y

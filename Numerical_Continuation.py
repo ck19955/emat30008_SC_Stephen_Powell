@@ -16,7 +16,7 @@ def natural_parameter(ode, initial_guess, vary_par_index, vary_range, orbit, arg
     :return: A list of solutions
     """
 
-    vary_count = 40  # Number of different variable values
+    vary_count = 20  # Number of different variable values
     vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
     args[vary_par_index] = vary_values[1]
 
@@ -70,35 +70,46 @@ def pseudo_arclength(ode, initial_guess, vary_par_index, vary_range, orbit, args
             The new value of the dependant variable after an euler step
     """
 
-    args[vary_par_index] = vary_range[0]
-    vary_count = 20  # Number of different variable values
+    vary_count = 50  # Number of different variable values
     vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
+    args[vary_par_index] = vary_values[1]
+
     if orbit:
         # Find first initial solution
-        times = np.linspace(0, 400, num=1000)  # Range of t_values to find orbit
+        times = np.linspace(0, 500, num=2000)  # Range of t_values to find orbit
         RK4_values = np.asarray(solve_ode(times, initial_guess, 0.1, RK4, ode, args))
+
+        #plt.plot(RK4_values)
+        #plt.show()
 
         # First known solution
         u0 = np.array(isolate_orbit(RK4_values, times))
-        p0 = vary_range[0]
+        p0 = vary_values[1]
 
         # Find second initial solution
-        args[vary_par_index] = vary_values[1]
+        args[vary_par_index] = vary_values[2]
         RK4_values = np.asarray(solve_ode(times, u0[:-1], 0.1, RK4, ode, args))
 
         # Second known solution
         u1 = np.array(isolate_orbit(RK4_values, times))
-        p1 = vary_values[1]
+        p1 = vary_values[2]
     else:
-        p0, p1 = vary_range[0], vary_values[1]
+        p0, p1 = vary_values[1], vary_values[2]
         u0 = np.array(fsolve(lambda x: ode(0, x, p0), np.array([initial_guess])))
         u1 = np.array(fsolve(lambda x: ode(0, x, p1), np.array([initial_guess])))
     state_secant = u1 - u0
     predict_ui = u1 + state_secant
     param_secant = p1 - p0
     predict_pi = p1 + param_secant
-    list_of_solutions = []
-    while p1 < vary_range[1]:
+    list_of_solutions = [np.append(u0, p0), np.append(u1, p1)]
+
+    if vary_range[1] < vary_range[0]:
+        statement = p1 > vary_range[1]
+
+    else:
+        statement = p1 < vary_range[1]
+
+    while statement:
         u0 = u1
         p0 = p1
         if orbit:
@@ -115,8 +126,9 @@ def pseudo_arclength(ode, initial_guess, vary_par_index, vary_range, orbit, args
         predict_pi = p1 + param_secant
         print(init_vals)
         list_of_solutions.append(init_vals)
-    u_values = [item[0] for item in list_of_solutions]
-    param_values = [item[1] for item in list_of_solutions]
+        statement = p1 > vary_range[1]
+    u_values = [item[:-1] for item in list_of_solutions]
+    param_values = [item[-1] for item in list_of_solutions]
     return u_values, param_values
 
 
@@ -129,13 +141,31 @@ if __name__ == '__main__':
     plt.plot(param_values, y_values)
     plt.show()
 '''
-
+    '''
     list_param, param_values = natural_parameter(mod_hopf_bif, np.array([0.5, 0.5]), 0, [2, -1], True, np.array([0], dtype=float))
     x_values = [item[0] for item in list_param]
     y_values = [item[1] for item in list_param]
     plt.plot(param_values, x_values)
     plt.plot(param_values, y_values)
     plt.show()
+'''
+
+    '''
+    list_param, param_values = pseudo_arclength(hopf_bif, np.array([0.5, 0.5]), 0, [0, 2], True, np.array([0], dtype=float))
+    x_values = [item[0] for item in list_param]
+    y_values = [item[1] for item in list_param]
+    plt.plot(param_values, x_values)
+    plt.plot(param_values, y_values)
+    plt.show()
+'''
+
+    list_param, param_values = pseudo_arclength(mod_hopf_bif, np.array([0.5, 0.5]), 0, [2, -1], True, np.array([0], dtype=float))
+    x_values = [item[0] for item in list_param]
+    y_values = [item[1] for item in list_param]
+    plt.plot(param_values, x_values)
+    plt.plot(param_values, y_values)
+    plt.show()
+
 
     '''
     y, x = natural_parameter(alg_cubic, np.array([1]), 0, [-2, 2], False, np.array([0], dtype=float))

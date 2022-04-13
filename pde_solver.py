@@ -37,8 +37,21 @@ def backward_euler(pde, L, lmbda, mx, mt):
     return solution_matrix
 
 
-def crank_nicholson():
-    pass
+def crank_nicholson(pde, L, lmbda, mx, mt):
+    A = np.diag([1+lmbda] * (mx - 1)) + np.diag([-lmbda/2] * (mx - 2), -1) + np.diag([-lmbda/2] * (mx - 2), 1)
+    B = np.diag([1-lmbda] * (mx - 1)) + np.diag([lmbda/2] * (mx - 2), -1) + np.diag([lmbda/2] * (mx - 2), 1)
+
+    # Solve the matrix equation to return the next value of u
+    x_vect = np.linspace(0, L, mx + 1)
+    u_vect = np.array(x_vect[1:-1])  # Remove start and end values
+
+    for i in range(len(u_vect)):
+        u_vect[i] = pde(u_vect[i], L)
+    solution_matrix = [0]*mt
+    solution_matrix[0] = u_vect
+    for i in range(0, mt-1):
+        solution_matrix[i+1] = np.linalg.solve(A, np.dot(B, solution_matrix[i]))
+    return solution_matrix
 
 
 def pde_solver(pde, L, T, method, args):
@@ -73,3 +86,5 @@ k = 1.0   # diffusion constant
 L = 3.0         # length of spatial domain
 T = 0.5         # total time to solve for
 pde_solver(u_I, L, T, backward_euler, np.array([k]))
+pde_solver(u_I, L, T, forward_euler, np.array([k]))
+pde_solver(u_I, L, T, crank_nicholson, np.array([k]))

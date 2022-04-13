@@ -1,18 +1,7 @@
 import numpy as np
 from math import pi
 import matplotlib.pyplot as plt
-
-
-def u_I(x, l):
-    # initial temperature distribution
-    y = np.sin(pi*x/l)
-    return y
-
-
-def u_exact(x, t, k, l):
-    # the exact solution to the temperature equation
-    y = np.exp(-k*(pi**2/l**2)*t)*np.sin(pi*x/l)
-    return y
+from function_examples import *
 
 
 def forward_euler(pde, L, lmbda, mx, mt):
@@ -31,6 +20,25 @@ def forward_euler(pde, L, lmbda, mx, mt):
     for i in range(0, mt-1):
         solution_matrix[i+1] = np.dot(A, solution_matrix[i])
     return solution_matrix
+
+
+def backward_euler(pde, L, lmbda, mx, mt):
+    A = np.diag([1+2*lmbda] * (mx - 1)) + np.diag([-lmbda] * (mx - 2), -1) + np.diag([-lmbda] * (mx - 2), 1)
+    # Solve the matrix equation to return the next value of u
+    x_vect = np.linspace(0, L, mx + 1)
+    u_vect = np.array(x_vect[1:-1])  # Remove start and end values
+
+    for i in range(len(u_vect)):
+        u_vect[i] = pde(u_vect[i], L)
+    solution_matrix = [0]*mt
+    solution_matrix[0] = u_vect
+    for i in range(0, mt-1):
+        solution_matrix[i+1] = np.linalg.solve(A, solution_matrix[i])
+    return solution_matrix
+
+
+def crank_nicholson():
+    pass
 
 
 def pde_solver(pde, L, T, method, args):
@@ -64,4 +72,4 @@ def pde_solver(pde, L, T, method, args):
 k = 1.0   # diffusion constant
 L = 3.0         # length of spatial domain
 T = 0.5         # total time to solve for
-pde_solver(u_I, L, T, forward_euler, np.array([k]))
+pde_solver(u_I, L, T, backward_euler, np.array([k]))

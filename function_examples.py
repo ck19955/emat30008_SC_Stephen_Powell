@@ -65,3 +65,11 @@ def u_exact(x, t, k, l):
     # the exact solution to the temperature equation
     y = np.exp(-k*(pi**2/l**2)*t)*np.sin(pi*x/l)
     return y
+
+
+def p(t):
+    return 3
+
+
+def q(t):
+    return 5

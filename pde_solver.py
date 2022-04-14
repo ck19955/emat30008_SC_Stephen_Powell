@@ -12,6 +12,8 @@ def forward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
 
     # Solve the matrix equation to return the next value of u
     u_vect = np.linspace(0, L, mx + 1)
+    for i in range(mx+1):
+        u_vect[i] = pde(u_vect[i], L)
 
     if bound_cond == 'dirichlet':
         additive_vector = np.zeros(mx - 1)
@@ -24,13 +26,15 @@ def forward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
         additive_vector = np.zeros(mx+1)
 
     if bound_cond == 'periodic':
+        A = np.diag([1-2*lmbda] * mx) + np.diag([lmbda] * (mx - 1), -1) + np.diag([lmbda] * (mx - 1), 1)
         A[0, -1] = lmbda
         A[-1, 0] = lmbda
+        solution_matrix = np.zeros((mt, mx))
+        solution_matrix[0] = u_vect[:-1]
 
-    for i in range(mx+1):
-        u_vect[i] = pde(u_vect[i], L)
-    solution_matrix = np.zeros((mt, mx+1))
-    solution_matrix[0] = u_vect
+    else:
+        solution_matrix = np.zeros((mt, mx+1))
+        solution_matrix[0] = u_vect
 
     for i in range(0, mt-1):
         if bound_cond == 'dirichlet':
@@ -41,6 +45,8 @@ def forward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
             additive_vector[0] = -p_func(i)
             additive_vector[-1] = q_func(i)
             solution_matrix[i+1] = np.dot(A, solution_matrix[i]) + 2*deltax*lmbda*additive_vector
+        elif bound_cond == 'periodic':
+            solution_matrix[i+1] = np.dot(A, solution_matrix[i])
         else:
             solution_matrix[i+1][1:-1] = np.dot(A, solution_matrix[i][1:-1])
     return solution_matrix
@@ -50,6 +56,8 @@ def backward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
     A = np.diag([1+2*lmbda] * (mx - 1)) + np.diag([-lmbda] * (mx - 2), -1) + np.diag([-lmbda] * (mx - 2), 1)
     # Solve the matrix equation to return the next value of u
     u_vect = np.linspace(0, L, mx + 1)
+    for i in range(mx+1):
+        u_vect[i] = pde(u_vect[i], L)
 
     if bound_cond == 'dirichlet':
         additive_vector = np.zeros(mx - 1)
@@ -62,13 +70,15 @@ def backward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
         additive_vector = np.zeros(mx + 1)
 
     if bound_cond == 'periodic':
+        A = np.diag([1+2*lmbda] * mx) + np.diag([-lmbda] * (mx - 1), -1) + np.diag([-lmbda] * (mx - 1), 1)
         A[0, -1] = -lmbda
         A[-1, 0] = -lmbda
+        solution_matrix = np.zeros((mt, mx))
+        solution_matrix[0] = u_vect[:-1]
 
-    for i in range(mx+1):
-        u_vect[i] = pde(u_vect[i], L)
-    solution_matrix = np.zeros((mt, mx+1))
-    solution_matrix[0] = u_vect
+    else:
+        solution_matrix = np.zeros((mt, mx+1))
+        solution_matrix[0] = u_vect
     for i in range(0, mt-1):
         if bound_cond == 'dirichlet':
             additive_vector[0] = p_func(i)
@@ -78,6 +88,8 @@ def backward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
             additive_vector[0] = -p_func(i)
             additive_vector[-1] = q_func(i)
             solution_matrix[i+1] = np.linalg.solve(A, solution_matrix[i] + 2*deltax*lmbda*additive_vector)
+        elif bound_cond == 'periodic':
+            solution_matrix[i+1] = np.linalg.solve(A, solution_matrix[i])
         else:
             solution_matrix[i+1][1:-1] = np.linalg.solve(A, solution_matrix[i][1:-1])
     return solution_matrix
@@ -89,6 +101,8 @@ def crank_nicholson(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
 
     # Solve the matrix equation to return the next value of u
     u_vect = np.linspace(0, L, mx + 1)
+    for i in range(mx+1):
+        u_vect[i] = pde(u_vect[i], L)
 
     if bound_cond == 'dirichlet':
         additive_vector = np.zeros(mx - 1)
@@ -104,13 +118,19 @@ def crank_nicholson(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
         additive_vector = np.zeros(mx + 1)
 
     if bound_cond == 'periodic':
-        A[0, -1] = lmbda
-        A[-1, 0] = lmbda
+        A = np.diag([1+lmbda] * mx) + np.diag([-lmbda/2] * (mx - 1), -1) + np.diag([-lmbda/2] * (mx - 1), 1)
+        B = np.diag([1-lmbda] * mx) + np.diag([lmbda/2] * (mx - 1), -1) + np.diag([lmbda/2] * (mx - 1), 1)
+        A[0, -1] = -lmbda/2
+        A[-1, 0] = -lmbda/2
+        B[0, -1] = lmbda/2
+        B[-1, 0] = lmbda/2
+        solution_matrix = np.zeros((mt, mx))
+        solution_matrix[0] = u_vect[:-1]
 
-    for i in range(mx+1):
-        u_vect[i] = pde(u_vect[i], L)
-    solution_matrix = np.zeros((mt, mx+1))
-    solution_matrix[0] = u_vect
+    else:
+        solution_matrix = np.zeros((mt, mx+1))
+        solution_matrix[0] = u_vect
+
     for i in range(0, mt-1):
         if bound_cond == 'dirichlet':
             additive_vector[0] = p_func(i)
@@ -120,7 +140,9 @@ def crank_nicholson(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
             additive_vector[0] = -p_func(i)
             additive_vector[-1] = q_func(i)
             solution_matrix[i+1] = np.linalg.solve(A, np.dot(B, solution_matrix[i]) +
-                                                         2*deltax*lmbda*additive_vector)
+                                                   2*deltax*lmbda*additive_vector)
+        elif bound_cond == 'periodic':
+            solution_matrix[i+1] = np.linalg.solve(A, np.dot(B, solution_matrix[i]))
         else:
             solution_matrix[i+1][1:-1] = np.linalg.solve(A, np.dot(B, solution_matrix[i][1:-1]))
     return solution_matrix
@@ -167,7 +189,8 @@ if __name__ == '__main__':
     boundary_cond1 = 'homogenous'
     boundary_cond2 = 'dirichlet'
     boundary_cond3 = 'neumann'
+    boundary_cond4 = 'periodic'
 
-    pde_solver(u_I, L, T, backward_euler, boundary_cond3, p, q, np.array([k]))
-    pde_solver(u_I, L, T, forward_euler, boundary_cond3, p, q, np.array([k]))
-    pde_solver(u_I, L, T, crank_nicholson, boundary_cond3, p, q, np.array([k]))
+    pde_solver(u_I, L, T, backward_euler, boundary_cond4, p, q, np.array([k]))
+    pde_solver(u_I, L, T, forward_euler, boundary_cond4, p, q, np.array([k]))
+    pde_solver(u_I, L, T, crank_nicholson, boundary_cond4, p, q, np.array([k]))

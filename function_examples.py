@@ -68,8 +68,8 @@ def u_exact(x, t, k, l):
 
 
 def p(t):
-    return 3
+    return 5
 
 
 def q(t):
-    return 5
+    return 3

@@ -46,6 +46,15 @@ def shooting_conditions(ode, u0, pseudo, orbit, args):
             vary_par = u0[-1]
             args[pseudo[0]] = vary_par
             sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)
+
+            #print(x0)
+            #print(sol.y[:, -1])
+            #x = sol.y
+            #plt.plot(sol.y[0, :])
+            #plt.plot(sol.y[1, :])
+            #plt.show()
+            #quit()
+
             x_condition = x0 - sol.y[:, -1]
             t_condition = np.asarray(ode(t0, x0, *args)[0])
             pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction,

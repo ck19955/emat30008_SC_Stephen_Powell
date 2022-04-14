@@ -11,70 +11,75 @@ def forward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
     A = np.diag([1-2*lmbda] * (mx - 1)) + np.diag([lmbda] * (mx - 2), -1) + np.diag([lmbda] * (mx - 2), 1)
 
     # Solve the matrix equation to return the next value of u
-    x_vect = np.linspace(0, L, mx + 1)
-    u_vect = np.array(x_vect[1:-1])  # Remove start and end values
+    u_vect = np.linspace(0, L, mx + 1)
 
     if bound_cond == 'dirichlet':
-        additive_vector = np.zeros(len(u_vect))
+        additive_vector = np.zeros(mx - 1)
 
     if bound_cond == 'neumann':
+        A = np.diag([1-2*lmbda] * (mx + 1)) + np.diag([lmbda] * mx, -1) + np.diag([lmbda] * mx, 1)
         A[0, 1] = 2*A[0, 1]
         A[-1, -2] = 2*A[-1, -2]
         deltax = L/mx
-        additive_vector = np.zeros(len(u_vect))
+        additive_vector = np.zeros(mx+1)
 
-    if bound_cond == 'period':
-        pass
+    if bound_cond == 'periodic':
+        A[0, -1] = lmbda
+        A[-1, 0] = lmbda
 
-    for i in range(len(u_vect)):
+    for i in range(mx+1):
         u_vect[i] = pde(u_vect[i], L)
-
-    solution_matrix = [0]*mt
+    solution_matrix = np.zeros((mt, mx+1))
     solution_matrix[0] = u_vect
+
     for i in range(0, mt-1):
         if bound_cond == 'dirichlet':
             additive_vector[0] = p_func(i)
             additive_vector[-1] = q_func(i)
-            solution_matrix[i+1] = np.dot(A, solution_matrix[i]) + lmbda*additive_vector
+            solution_matrix[i+1][1:-1] = np.dot(A, solution_matrix[i][1:-1]) + lmbda*additive_vector
         elif bound_cond == 'neumann':
             additive_vector[0] = -p_func(i)
             additive_vector[-1] = q_func(i)
             solution_matrix[i+1] = np.dot(A, solution_matrix[i]) + 2*deltax*lmbda*additive_vector
         else:
-            solution_matrix[i+1] = np.dot(A, solution_matrix[i])
+            solution_matrix[i+1][1:-1] = np.dot(A, solution_matrix[i][1:-1])
     return solution_matrix
 
 
 def backward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
     A = np.diag([1+2*lmbda] * (mx - 1)) + np.diag([-lmbda] * (mx - 2), -1) + np.diag([-lmbda] * (mx - 2), 1)
     # Solve the matrix equation to return the next value of u
-    x_vect = np.linspace(0, L, mx + 1)
-    u_vect = np.array(x_vect[1:-1])  # Remove start and end values
+    u_vect = np.linspace(0, L, mx + 1)
 
     if bound_cond == 'dirichlet':
-        additive_vector = np.zeros(len(u_vect))
+        additive_vector = np.zeros(mx - 1)
 
     if bound_cond == 'neumann':
+        A = np.diag([1+2*lmbda] * (mx + 1)) + np.diag([-lmbda] * mx, -1) + np.diag([-lmbda] * mx, 1)
         A[0, 1] = 2*A[0, 1]
         A[-1, -2] = 2*A[-1, -2]
         deltax = L/mx
-        additive_vector = np.zeros(len(u_vect))
+        additive_vector = np.zeros(mx + 1)
 
-    for i in range(len(u_vect)):
+    if bound_cond == 'periodic':
+        A[0, -1] = -lmbda
+        A[-1, 0] = -lmbda
+
+    for i in range(mx+1):
         u_vect[i] = pde(u_vect[i], L)
-    solution_matrix = [0]*mt
+    solution_matrix = np.zeros((mt, mx+1))
     solution_matrix[0] = u_vect
     for i in range(0, mt-1):
         if bound_cond == 'dirichlet':
             additive_vector[0] = p_func(i)
             additive_vector[-1] = q_func(i)
-            solution_matrix[i+1] = np.linalg.solve(A, solution_matrix[i] + lmbda*additive_vector)
+            solution_matrix[i+1][1:-1] = np.linalg.solve(A, solution_matrix[i][1:-1] + lmbda*additive_vector)
         elif bound_cond == 'neumann':
             additive_vector[0] = -p_func(i)
             additive_vector[-1] = q_func(i)
             solution_matrix[i+1] = np.linalg.solve(A, solution_matrix[i] + 2*deltax*lmbda*additive_vector)
         else:
-            solution_matrix[i+1] = np.linalg.solve(A, solution_matrix[i])
+            solution_matrix[i+1][1:-1] = np.linalg.solve(A, solution_matrix[i][1:-1])
     return solution_matrix
 
 
@@ -83,35 +88,41 @@ def crank_nicholson(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
     B = np.diag([1-lmbda] * (mx - 1)) + np.diag([lmbda/2] * (mx - 2), -1) + np.diag([lmbda/2] * (mx - 2), 1)
 
     # Solve the matrix equation to return the next value of u
-    x_vect = np.linspace(0, L, mx + 1)
-    u_vect = np.array(x_vect[1:-1])  # Remove start and end values
+    u_vect = np.linspace(0, L, mx + 1)
 
     if bound_cond == 'dirichlet':
-        additive_vector = np.zeros(len(u_vect))
+        additive_vector = np.zeros(mx - 1)
 
     if bound_cond == 'neumann':
+        A = np.diag([1+lmbda] * (mx + 1)) + np.diag([-lmbda/2] * mx, -1) + np.diag([-lmbda/2] * mx, 1)
+        B = np.diag([1-lmbda] * (mx + 1)) + np.diag([lmbda/2] * mx, -1) + np.diag([lmbda/2] * mx, 1)
         A[0, 1] = 2*A[0, 1]
         A[-1, -2] = 2*A[-1, -2]
         B[0, 1] = 2*B[0, 1]
         B[-1, -2] = 2*B[-1, -2]
         deltax = L/mx
-        additive_vector = np.zeros(len(u_vect))
+        additive_vector = np.zeros(mx + 1)
 
-    for i in range(len(u_vect)):
+    if bound_cond == 'periodic':
+        A[0, -1] = lmbda
+        A[-1, 0] = lmbda
+
+    for i in range(mx+1):
         u_vect[i] = pde(u_vect[i], L)
-    solution_matrix = [0]*mt
+    solution_matrix = np.zeros((mt, mx+1))
     solution_matrix[0] = u_vect
     for i in range(0, mt-1):
         if bound_cond == 'dirichlet':
             additive_vector[0] = p_func(i)
             additive_vector[-1] = q_func(i)
-            solution_matrix[i+1] = np.linalg.solve(A, np.dot(B, solution_matrix[i]) + lmbda*additive_vector)
+            solution_matrix[i+1][1:-1] = np.linalg.solve(A, np.dot(B, solution_matrix[i][1:-1]) + lmbda*additive_vector)
         elif bound_cond == 'neumann':
             additive_vector[0] = -p_func(i)
             additive_vector[-1] = q_func(i)
-            solution_matrix[i+1] = np.linalg.solve(A, np.dot(B, solution_matrix[i]) + 2*deltax*lmbda*additive_vector)
+            solution_matrix[i+1] = np.linalg.solve(A, np.dot(B, solution_matrix[i]) +
+                                                         2*deltax*lmbda*additive_vector)
         else:
-            solution_matrix[i+1] = np.linalg.solve(A, np.dot(B, solution_matrix[i]))
+            solution_matrix[i+1][1:-1] = np.linalg.solve(A, np.dot(B, solution_matrix[i][1:-1]))
     return solution_matrix
 
 
@@ -135,7 +146,7 @@ def pde_solver(pde, L, T, method, bound_cond, p_func, q_func, args):
     deltat = t[1] - t[0]            # gridspacing in t
     lmbda = args[0]*deltat/(deltax**2)    # mesh fourier number
 
-    u_vect = method(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func)[-1]
+    u_vect = method(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func)[-1][1:-1]
 
     print(u_vect)
     plt.plot(u_vect)
@@ -153,7 +164,10 @@ if __name__ == '__main__':
     # dirichlet
     # neumann
     # periodic
+    boundary_cond1 = 'homogenous'
+    boundary_cond2 = 'dirichlet'
+    boundary_cond3 = 'neumann'
 
-    pde_solver(u_I, L, T, backward_euler, 'homogenous', p, q, np.array([k]))
-    pde_solver(u_I, L, T, forward_euler, 'homogenous', p, q, np.array([k]))
-    pde_solver(u_I, L, T, crank_nicholson, 'homogenous', p, q, np.array([k]))
+    pde_solver(u_I, L, T, backward_euler, boundary_cond3, p, q, np.array([k]))
+    pde_solver(u_I, L, T, forward_euler, boundary_cond3, p, q, np.array([k]))
+    pde_solver(u_I, L, T, crank_nicholson, boundary_cond3, p, q, np.array([k]))

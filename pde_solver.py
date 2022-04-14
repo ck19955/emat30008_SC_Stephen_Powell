@@ -5,71 +5,141 @@ from function_examples import *
 
 
 def forward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
-    # Set up the solution variables
+    """
+    Solves a given pde using the forward euler method
+
+    Parameters:
+    ----------
+        pde : function
+            The PDE to be solved
+        L : float
+            The length of the spatial domain
+        lmbda : float
+            Mesh fourier number
+        mx : integer
+            Number of gridpoints in space
+        mt : integer
+            Number of gridpoints in time
+        bound_cond : string
+            boundary condition type for the PDE
+        p_func : function
+            The value at u(0, t)
+        q_func : function
+            The value at u(L, t)
+
+    Returns:
+    ----------
+        solution_matrix : numpy array
+            Matrix of all data points in the space at any given time
+    """
+
+    # Check whether forward_euler method is suitable
     if not 0 < lmbda < 1/2:
         raise RuntimeError("Invalid value for lmbda")
-    A = np.diag([1-2*lmbda] * (mx - 1)) + np.diag([lmbda] * (mx - 2), -1) + np.diag([lmbda] * (mx - 2), 1)
 
-    # Solve the matrix equation to return the next value of u
+    # Evaluate initial solution values
     u_vect = np.linspace(0, L, mx + 1)
     for i in range(mx+1):
         u_vect[i] = pde(u_vect[i], L)
 
+    # Initialise the matrix of solutions with the initial solution values
+    solution_matrix = np.zeros((mt, mx+1))
+    solution_matrix[0] = u_vect
+
+    # Check boundary conditions
     if bound_cond == 'dirichlet':
+        A = np.diag([1-2*lmbda] * (mx - 1)) + np.diag([lmbda] * (mx - 2), -1) + np.diag([lmbda] * (mx - 2), 1)
         additive_vector = np.zeros(mx - 1)
 
-    if bound_cond == 'neumann':
+    elif bound_cond == 'neumann':
         A = np.diag([1-2*lmbda] * (mx + 1)) + np.diag([lmbda] * mx, -1) + np.diag([lmbda] * mx, 1)
         A[0, 1] = 2*A[0, 1]
         A[-1, -2] = 2*A[-1, -2]
         deltax = L/mx
         additive_vector = np.zeros(mx+1)
 
-    if bound_cond == 'periodic':
+    elif bound_cond == 'periodic':
         A = np.diag([1-2*lmbda] * mx) + np.diag([lmbda] * (mx - 1), -1) + np.diag([lmbda] * (mx - 1), 1)
         A[0, -1] = lmbda
         A[-1, 0] = lmbda
         solution_matrix = np.zeros((mt, mx))
         solution_matrix[0] = u_vect[:-1]
 
-    else:
-        solution_matrix = np.zeros((mt, mx+1))
-        solution_matrix[0] = u_vect
+    elif bound_cond == 'homogenous':
+        A = np.diag([1-2*lmbda] * (mx - 1)) + np.diag([lmbda] * (mx - 2), -1) + np.diag([lmbda] * (mx - 2), 1)
 
+    # Iterate over time values
     for i in range(0, mt-1):
         if bound_cond == 'dirichlet':
             additive_vector[0] = p_func(i)
             additive_vector[-1] = q_func(i)
             solution_matrix[i+1][1:-1] = np.dot(A, solution_matrix[i][1:-1]) + lmbda*additive_vector
+
         elif bound_cond == 'neumann':
             additive_vector[0] = -p_func(i)
             additive_vector[-1] = q_func(i)
             solution_matrix[i+1] = np.dot(A, solution_matrix[i]) + 2*deltax*lmbda*additive_vector
+
         elif bound_cond == 'periodic':
             solution_matrix[i+1] = np.dot(A, solution_matrix[i])
+
         else:
             solution_matrix[i+1][1:-1] = np.dot(A, solution_matrix[i][1:-1])
+
     return solution_matrix
 
 
 def backward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
-    A = np.diag([1+2*lmbda] * (mx - 1)) + np.diag([-lmbda] * (mx - 2), -1) + np.diag([-lmbda] * (mx - 2), 1)
-    # Solve the matrix equation to return the next value of u
+    """
+    Solves a given pde using the backward euler method
+
+    Parameters:
+    ----------
+        pde : function
+            The PDE to be solved
+        L : float
+            The length of the spatial domain
+        lmbda : float
+            Mesh fourier number
+        mx : integer
+            Number of gridpoints in space
+        mt : integer
+            Number of gridpoints in time
+        bound_cond : string
+            boundary condition type for the PDE
+        p_func : function
+            The value at u(0, t)
+        q_func : function
+            The value at u(L, t)
+
+    Returns:
+    ----------
+        solution_matrix : numpy array
+            Matrix of all data points in the space at any given time
+    """
+
+    # Evaluate initial solution values
     u_vect = np.linspace(0, L, mx + 1)
     for i in range(mx+1):
         u_vect[i] = pde(u_vect[i], L)
 
+    # Initialise the matrix of solutions with the initial solution values
+    solution_matrix = np.zeros((mt, mx+1))
+    solution_matrix[0] = u_vect
+
+    # Check boundary conditions
     if bound_cond == 'dirichlet':
+        A = np.diag([1+2*lmbda] * (mx - 1)) + np.diag([-lmbda] * (mx - 2), -1) + np.diag([-lmbda] * (mx - 2), 1)
         additive_vector = np.zeros(mx - 1)
 
-    if bound_cond == 'neumann':
+    elif bound_cond == 'neumann':
         A = np.diag([1+2*lmbda] * (mx + 1)) + np.diag([-lmbda] * mx, -1) + np.diag([-lmbda] * mx, 1)
         A[0, 1] = 2*A[0, 1]
         A[-1, -2] = 2*A[-1, -2]
         deltax = L/mx
         additive_vector = np.zeros(mx + 1)
 
-    if bound_cond == 'periodic':
+    elif bound_cond == 'periodic':
         A = np.diag([1+2*lmbda] * mx) + np.diag([-lmbda] * (mx - 1), -1) + np.diag([-lmbda] * (mx - 1), 1)
         A[0, -1] = -lmbda
         A[-1, 0] = -lmbda
@@ -77,8 +147,9 @@ def backward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
         solution_matrix[0] = u_vect[:-1]
 
     else:
-        solution_matrix = np.zeros((mt, mx+1))
-        solution_matrix[0] = u_vect
+        A = np.diag([1+2*lmbda] * (mx - 1)) + np.diag([-lmbda] * (mx - 2), -1) + np.diag([-lmbda] * (mx - 2), 1)
+
+    # Iterate over time values
     for i in range(0, mt-1):
         if bound_cond == 'dirichlet':
             additive_vector[0] = p_func(i)
@@ -96,18 +167,50 @@ def backward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
 
 
 def crank_nicholson(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
-    A = np.diag([1+lmbda] * (mx - 1)) + np.diag([-lmbda/2] * (mx - 2), -1) + np.diag([-lmbda/2] * (mx - 2), 1)
-    B = np.diag([1-lmbda] * (mx - 1)) + np.diag([lmbda/2] * (mx - 2), -1) + np.diag([lmbda/2] * (mx - 2), 1)
+    """
+    Solves a given pde using the Crank Nicholson method
 
-    # Solve the matrix equation to return the next value of u
+    Parameters:
+    ----------
+        pde : function
+            The PDE to be solved
+        L : float
+            The length of the spatial domain
+        lmbda : float
+            Mesh fourier number
+        mx : integer
+            Number of gridpoints in space
+        mt : integer
+            Number of gridpoints in time
+        bound_cond : string
+            boundary condition type for the PDE
+        p_func : function
+            The value at u(0, t)
+        q_func : function
+            The value at u(L, t)
+
+    Returns:
+    ----------
+        solution_matrix : numpy array
+            Matrix of all data points in the space at any given time
+    """
+
+    # Evaluate initial solution values
     u_vect = np.linspace(0, L, mx + 1)
     for i in range(mx+1):
         u_vect[i] = pde(u_vect[i], L)
 
+    # Initialise the matrix of solutions with the initial solution values
+    solution_matrix = np.zeros((mt, mx+1))
+    solution_matrix[0] = u_vect
+
+    # Check boundary conditions
     if bound_cond == 'dirichlet':
+        A = np.diag([1+lmbda] * (mx - 1)) + np.diag([-lmbda/2] * (mx - 2), -1) + np.diag([-lmbda/2] * (mx - 2), 1)
+        B = np.diag([1-lmbda] * (mx - 1)) + np.diag([lmbda/2] * (mx - 2), -1) + np.diag([lmbda/2] * (mx - 2), 1)
         additive_vector = np.zeros(mx - 1)
 
-    if bound_cond == 'neumann':
+    elif bound_cond == 'neumann':
         A = np.diag([1+lmbda] * (mx + 1)) + np.diag([-lmbda/2] * mx, -1) + np.diag([-lmbda/2] * mx, 1)
         B = np.diag([1-lmbda] * (mx + 1)) + np.diag([lmbda/2] * mx, -1) + np.diag([lmbda/2] * mx, 1)
         A[0, 1] = 2*A[0, 1]
@@ -117,7 +220,7 @@ def crank_nicholson(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
         deltax = L/mx
         additive_vector = np.zeros(mx + 1)
 
-    if bound_cond == 'periodic':
+    elif bound_cond == 'periodic':
         A = np.diag([1+lmbda] * mx) + np.diag([-lmbda/2] * (mx - 1), -1) + np.diag([-lmbda/2] * (mx - 1), 1)
         B = np.diag([1-lmbda] * mx) + np.diag([lmbda/2] * (mx - 1), -1) + np.diag([lmbda/2] * (mx - 1), 1)
         A[0, -1] = -lmbda/2
@@ -128,9 +231,10 @@ def crank_nicholson(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
         solution_matrix[0] = u_vect[:-1]
 
     else:
-        solution_matrix = np.zeros((mt, mx+1))
-        solution_matrix[0] = u_vect
+        A = np.diag([1+lmbda] * (mx - 1)) + np.diag([-lmbda/2] * (mx - 2), -1) + np.diag([-lmbda/2] * (mx - 2), 1)
+        B = np.diag([1-lmbda] * (mx - 1)) + np.diag([lmbda/2] * (mx - 2), -1) + np.diag([lmbda/2] * (mx - 2), 1)
 
+    # Iterate over time values
     for i in range(0, mt-1):
         if bound_cond == 'dirichlet':
             additive_vector[0] = p_func(i)
@@ -150,11 +254,30 @@ def crank_nicholson(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
 
 def pde_solver(pde, L, T, method, bound_cond, p_func, q_func, args):
     """
-    :param pde:
-    :param L: length of spatial domain
-    :param T: total time to solve for
-    :param args: diffusion constant
-    :return:
+    Uses a given finite difference method to solve a given PDE
+
+    Parameters:
+    ----------
+        pde : function
+            The PDE to be solved
+        L : float
+            The length of the spatial domain
+        lmbda : float
+            Mesh fourier number
+        method : function
+            The method to solve the PDE
+        bound_cond : string
+            boundary condition type for the PDE
+        p_func : function
+            The value at u(0, t)
+        q_func : function
+            The value at u(L, t)
+        args : list
+            arguments required for given PDE (E.g for heat diffusion this includes kappa)
+    Returns:
+    ----------
+        u_vect : numpy array
+            Final solution vector at time, T
     """
 
     # Set numerical parameters
@@ -168,11 +291,12 @@ def pde_solver(pde, L, T, method, bound_cond, p_func, q_func, args):
     deltat = t[1] - t[0]            # gridspacing in t
     lmbda = args[0]*deltat/(deltax**2)    # mesh fourier number
 
+    # Solve PDE
     u_vect = method(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func)[-1][1:-1]
 
-    print(u_vect)
     plt.plot(u_vect)
     plt.show()
+    return u_vect
 
 
 if __name__ == '__main__':
@@ -191,6 +315,6 @@ if __name__ == '__main__':
     boundary_cond3 = 'neumann'
     boundary_cond4 = 'periodic'
 
-    pde_solver(u_I, L, T, backward_euler, boundary_cond4, p, q, np.array([k]))
-    pde_solver(u_I, L, T, forward_euler, boundary_cond4, p, q, np.array([k]))
-    pde_solver(u_I, L, T, crank_nicholson, boundary_cond4, p, q, np.array([k]))
+    pde_solver(u_I, L, T, backward_euler, boundary_cond1, p, q, np.array([k]))
+    pde_solver(u_I, L, T, forward_euler, boundary_cond1, p, q, np.array([k]))
+    pde_solver(u_I, L, T, crank_nicholson, boundary_cond1, p, q, np.array([k]))

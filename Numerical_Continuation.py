@@ -4,9 +4,10 @@ from ODE_Solver import RK4, solve_ode
 from function_examples import *
 from Numerical_Shooting import isolate_orbit, shooting, shooting_conditions
 from scipy.optimize import fsolve
+from pde_solver import pde_solver, forward_euler, backward_euler, crank_nicholson
 
 
-def natural_parameter(ode, initial_guess, vary_par_index, vary_range, orbit, args):
+def natural_parameter(ode, initial_guess, step_size, vary_par_index, vary_range, orbit, args):
     """
     :param ode: Example ODE
     :param initial_guess: The initial guess for isolating an orbit
@@ -16,7 +17,7 @@ def natural_parameter(ode, initial_guess, vary_par_index, vary_range, orbit, arg
     :return: A list of solutions
     """
 
-    vary_count = 20  # Number of different variable values
+    vary_count = int((np.diff(vary_range))/step_size)  # Number of different variable values
     vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
     args[vary_par_index] = vary_values[1]
 
@@ -24,10 +25,8 @@ def natural_parameter(ode, initial_guess, vary_par_index, vary_range, orbit, arg
         # Find the initial solution using isolate_orbit()
         times = np.linspace(0, 100, num=1000)  # Range of t_values to find orbit
         RK4_values = np.asarray(solve_ode(times, initial_guess, 0.01, RK4, ode, args))
-        # plt.plot(RK4_values)
-        # plt.show()
         init_vals = isolate_orbit(RK4_values, times)
-        list_of_solutions = [init_vals]
+
     else:
         # If shooting is not required
         # Find initial solution
@@ -47,7 +46,7 @@ def natural_parameter(ode, initial_guess, vary_par_index, vary_range, orbit, arg
     return list_of_solutions, vary_values
 
 
-def pseudo_arclength(ode, initial_guess, vary_par_index, vary_range, orbit, args):
+def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, orbit, args):
     """
     Executes a single step of the forward euler method for given value, t_n
 
@@ -70,7 +69,7 @@ def pseudo_arclength(ode, initial_guess, vary_par_index, vary_range, orbit, args
             The new value of the dependant variable after an euler step
     """
 
-    vary_count = 50  # Number of different variable values
+    vary_count = int((np.diff(vary_range))/step_size)  # Number of different variable values
     vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
     args[vary_par_index] = vary_values[1]
 
@@ -126,60 +125,86 @@ def pseudo_arclength(ode, initial_guess, vary_par_index, vary_range, orbit, args
         predict_pi = p1 + param_secant
         print(init_vals)
         list_of_solutions.append(init_vals)
-        statement = p1 > vary_range[1]
+        if vary_range[1] < vary_range[0]:
+            statement = p1 > vary_range[1]
+        else:
+            statement = p1 < vary_range[1]
     u_values = [item[:-1] for item in list_of_solutions]
     param_values = [item[-1] for item in list_of_solutions]
     return u_values, param_values
 
 
+def continuation(diff_eq, initial_guess, step_size, vary_par_index, vary_range, orbit, discretisation, method,
+                 boundary, L, T, p_func, q_func, plot, args):
+    if discretisation == 'pseudo_arclength':
+        list_param, param_values = pseudo_arclength(diff_eq, initial_guess, step_size, vary_par_index, vary_range, orbit, args)
+        if len(list_param[0]) == 1:
+            plt.plot(param_values, list_param)
+        else:
+            t_remove = 0
+            if orbit:
+                t_remove = 1
+            for i in range(len(list_param[0])-t_remove):
+                x_values = [item[i] for item in list_param]
+                plt.plot(param_values, x_values)
+        plt.show()
+
+    elif discretisation == 'natural_parameter':
+        list_param, param_values = natural_parameter(diff_eq, initial_guess, step_size, vary_par_index, vary_range, orbit, args)
+        if len(list_param[0]) == 1:
+            plt.plot(param_values, list_param)
+        else:
+            t_remove = 0
+            if orbit:
+                t_remove = 1
+            for i in range(len(list_param[0])-t_remove):
+                x_values = [item[i] for item in list_param]
+                plt.plot(param_values, x_values)
+        plt.show()
+
+    elif discretisation == 'pde_solve':
+        # Set problem parameters/functions
+        # k = 1.0   # diffusion constant
+        # L = 1.0         # length of spatial domain
+        # T = 0.5         # total time to solve for
+
+        # Boundary examples
+        boundary_cond1 = 'homogenous'
+        boundary_cond2 = 'dirichlet'
+        boundary_cond3 = 'neumann'
+        boundary_cond4 = 'periodic'
+
+        pde_solver(diff_eq, L, T, method, boundary, p_func, q_func, args)
+
+    elif discretisation == 'shooting':
+        u_vect = shooting(diff_eq, initial_guess, False, orbit, args)
+
+    elif discretisation == 'ode_solve':
+        times = np.linspace(0, T, num=1000)
+        u_values = np.asarray(solve_ode(times, initial_guess, step_size, method, diff_eq, args))
+
+
 if __name__ == '__main__':
+
     '''
-    list_param, param_values = natural_parameter(hopf_bif, np.array([0.5, 0.5]), 0, [0, 2], True, np.array([0], dtype=float))
-    x_values = [item[0] for item in list_param]
-    y_values = [item[1] for item in list_param]
-    plt.plot(param_values, x_values)
-    plt.plot(param_values, y_values)
-    plt.show()
+    continuation(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [0, 2], True, 'natural_parameter', RK4,
+                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
+
+    continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'natural_parameter', RK4,
+                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
+
+    continuation(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [0, 2], True, 'pseudo_arclength', RK4,
+                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
+
+    continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'pseudo_arclength', RK4,
+                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
+
+
+    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'pseudo_arclength', RK4,
+                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
+
+    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'natural_parameter', RK4,
+                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
 '''
-    '''
-    list_param, param_values = natural_parameter(mod_hopf_bif, np.array([0.5, 0.5]), 0, [2, -1], True, np.array([0], dtype=float))
-    x_values = [item[0] for item in list_param]
-    y_values = [item[1] for item in list_param]
-    plt.plot(param_values, x_values)
-    plt.plot(param_values, y_values)
-    plt.show()
-'''
-
-    '''
-    list_param, param_values = pseudo_arclength(hopf_bif, np.array([0.5, 0.5]), 0, [0, 2], True, np.array([0], dtype=float))
-    x_values = [item[0] for item in list_param]
-    y_values = [item[1] for item in list_param]
-    plt.plot(param_values, x_values)
-    plt.plot(param_values, y_values)
-    plt.show()
-'''
-
-    list_param, param_values = pseudo_arclength(mod_hopf_bif, np.array([0.5, 0.5]), 0, [2, -1], True, np.array([0], dtype=float))
-    x_values = [item[0] for item in list_param]
-    y_values = [item[1] for item in list_param]
-    plt.plot(param_values, x_values)
-    plt.plot(param_values, y_values)
-    plt.show()
-
-
-    '''
-    y, x = natural_parameter(alg_cubic, np.array([1]), 0, [-2, 2], False, np.array([0], dtype=float))
-    print(y)
-    plt.plot(x, y)
-    plt.show()
-    
-    y, x = pseudo_arclength(alg_cubic, np.array([1]), 0, [-2, 2], False, np.array([0], dtype=float))
-    plt.plot(x, y)
-    plt.show()
-    '''
-
-    # pseudo_arclength(hopf_bif, np.array([1, 1]), 0, [0, 2], np.array([0], dtype=float))
-    # pseudo_arclength(pred_prey, np.array([1, 1]), 1, [0.1, 0.2], np.array([1, 0.1, 0.1]))
-    #print(list_param)
 
 

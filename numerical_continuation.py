@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from ODE_Solver import RK4, solve_ode
+from ode_solver import RK4, solve_ode
 from function_examples import *
-from Numerical_Shooting import isolate_orbit, shooting, shooting_conditions
+from numerical_shooting import isolate_orbit, shooting, shooting_conditions
 from scipy.optimize import fsolve
 from pde_solver import pde_solver, forward_euler, backward_euler, crank_nicholson, find_steady_state
 

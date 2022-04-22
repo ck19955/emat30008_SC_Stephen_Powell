@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from ODE_Solver import RK4, solve_ode
+from ode_solver import RK4, solve_ode
 from scipy.signal import find_peaks
 from scipy.integrate import solve_ivp
 from scipy.optimize import fsolve
@@ -100,9 +100,10 @@ def plot_function(ode, u0, time_range, step_size, solver, args):
     :param solver: chosen solver (not yet implemented, currently set RK4 as default)
     :return: Plot of the isolated orbit found by the numerical shooter
     """
+    print(u0)
     x0 = u0[:-1]
     t0 = u0[-1]
-    times = np.linspace(0, time_range, num=1000)
+    times = np.linspace(0, t0, num=1000)
     data_values = np.asarray(solve_ode(times, x0, step_size, solver, ode, args))
     plt.plot(times, data_values[:, 0])
     plt.plot(times, data_values[:, 1])
@@ -115,17 +116,19 @@ if __name__ == '__main__':
 
     '''
     # args = np.array([1, -1])
-    args = np.array([1, 0.2, 0.1])
+
     #print(shooting(pred_prey, np.array([1, 1, 20]), False, args))
     
-    
+
     # Plots the solved ODE
+    args = np.array([1, 0.2, 0.1])
     times1 = np.linspace(0, 400, num=1000)
     # RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
     RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, pred_prey, args))
     init_vals = isolate_orbit(RK4_values, times1)
-    plot_function(pred_prey, init_vals, 0.1, RK4, args)
-    '''
+    print(init_vals)
+    plot_function(pred_prey, init_vals, 400, 0.1, RK4, args)
+'''
 
     args = np.array([0.04])
     #print(shooting(hopf_bif, np.array([1, 1, 8]), False, False, args))
@@ -135,7 +138,7 @@ if __name__ == '__main__':
     # RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
     #RK4_values = np.asarray(solve_ode(times1, np.array([0.3, 0.1]), 0.1, RK4, hopf_bif, args))
     #init_vals = isolate_orbit(RK4_values, times1)
-    plot_function(hopf_bif, shooting(hopf_bif, np.array([0.5, 0.5, 20]), False, True, args), 10, 0.1, RK4, args)
+    plot_function(hopf_bif, shooting(hopf_bif, np.array([-0.2, 0, 6]), False, True, args), 10, 0.1, RK4, args)
 
 
 

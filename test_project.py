@@ -1,6 +1,8 @@
 # Testing the entirety of the project
-from ODE_Solver import *
+from ode_solver import *
 from function_examples import *
+from numerical_shooting import *
+from numerical_continuation import *
 
 
 def exact_sol(exact_func, t_range, t_space, x):
@@ -28,32 +30,63 @@ def test_rk4():
 
 
 # Test orbit isolator
+def test_orbit():
+    times = np.linspace(0, 400, num=1000)
+    solution_values = np.asarray(solve_ode(times, np.array([1, 1]), 0.1, RK4, pred_prey, np.array([1, 0.2, 0.1])))
+    initial_orbit_values = isolate_orbit(solution_values, times)
+    data_values = np.asarray(solve_ode(times, initial_orbit_values[:-1], 0.1, RK4, pred_prey, np.array([1, 0.2, 0.1])))
+    orbit_index = int(initial_orbit_values[-1]/(400/1000))
+    assert np.allclose(initial_orbit_values[:-1], data_values[orbit_index][:-1], rtol=1)
 
 
 # Test shooting
+def test_shooting():
+    # Can it find the orbit
+    args = np.array([0.04])
+    times = np.linspace(0, 400, num=1000)
+    solution_values = np.asarray(solve_ode(times, np.array([0.5, 0.5]), 0.1, RK4, hopf_bif, args))
+    initial_orbit_values = isolate_orbit(solution_values, times)
+    shooting_orbit_values = shooting(hopf_bif, initial_orbit_values, False, True, args)
+    assert np.allclose(initial_orbit_values[-1], shooting_orbit_values[-1], rtol=1)
 
 
 # Test natural parameter
+def test_natural_parameter():
+    pass
 
 
 # Test pseudo arclength
+def test_pseudo_arclength():
+    pass
 
 
 # Test pde forward euler
+def test_forward_euler():
+    pass
 
 
 # Test pde backward euler
+def test_backward_euler():
+    pass
 
 
 # Test pde crank nicholson
+def test_crank_nicholson():
+    pass
 
 
 # Test steady state
+def test_steady_states():
+    pass
 
 
 # Different boundary conditions
+def test_boundaries():
+    pass
 
 
 # Test pde continuation
+def test_pde_continuation():
+    pass
 
 

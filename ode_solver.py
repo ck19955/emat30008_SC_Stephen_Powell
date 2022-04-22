@@ -180,8 +180,6 @@ if __name__ == '__main__':
     #RK4_values = np.asarray(solve_ode(times1, np.array([3, 4]), 0.1, RK4, hopf_bif, [0.2]))
     RK4_values = np.asarray(solve_ode(times1, np.array([3, 4]), 0.1, RK4, ode_second_order, []))
     exact = math.exp(times1)
-    print(RK4_values)
-    print(exact)
     plt.plot(RK4_values)
     plt.show()
     # times = [0, 1]

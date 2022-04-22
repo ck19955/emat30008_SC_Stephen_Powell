@@ -7,8 +7,7 @@ from scipy.optimize import fsolve
 from pde_solver import pde_solver, forward_euler, backward_euler, crank_nicholson, find_steady_state
 
 
-def natural_parameter(ode, initial_guess, step_size, vary_par_index, vary_range, orbit, pde, L, T, method,
-                      boundary_cond, p, q, args):
+def natural_parameter(ode, initial_guess, step_size, vary_par_index, vary_range, orbit, args):
     """
     :param ode: Example ODE
     :param initial_guess: The initial guess for isolating an orbit
@@ -29,31 +28,20 @@ def natural_parameter(ode, initial_guess, step_size, vary_par_index, vary_range,
         init_vals = isolate_orbit(RK4_values, times)
 
     else:
-        if pde:
-            solution_matrix = pde_solver(ode, L, T, method, boundary_cond, p, q, args)
-            init_vals = find_steady_state(solution_matrix)
-
         # If shooting is not required
         # Find initial solution
-        else:
-            args[vary_par_index] = vary_range[0]
-            init_vals = fsolve(lambda x: ode(0, x, args), np.array([initial_guess]))
+        args[vary_par_index] = vary_range[0]
+        init_vals = fsolve(lambda x: ode(0, x, args), np.array([initial_guess]))
 
     list_of_solutions = [0] * len(vary_values)
     list_of_solutions[0] = init_vals
     for i in range(1, len(vary_values)):
+        args[vary_par_index] = vary_values[i]
         if orbit:
-            args[vary_par_index] = vary_values[i]
             init_vals = shooting(ode, init_vals, [], orbit, args)
-            list_of_solutions[i] = init_vals
         else:
-            args[vary_par_index] = vary_values[i]
-            if pde:
-                solution_matrix = pde_solver(ode, L, T, method, boundary_cond, p, q, args)
-                list_of_solutions[i] = find_steady_state(solution_matrix)
-            else:
-                init_vals = fsolve(lambda x: ode(0, x, args), np.array([init_vals]))
-                list_of_solutions[i] = init_vals
+            init_vals = fsolve(lambda x: ode(0, x, args), np.array([init_vals]))
+        list_of_solutions[i] = init_vals
     return list_of_solutions, vary_values
 
 
@@ -150,6 +138,38 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
     return u_values, param_values
 
 
+def pde_continuation(ode, step_size, vary_par_index, vary_range, L, T, method,
+                     boundary_cond, p_func, q_func, args):
+    """
+    :param q_func:
+    :param p_func:
+    :param boundary_cond:
+    :param L:
+    :param T:
+    :param method:
+    :param ode: Example ODE
+    :param step_size: The initial guess for isolating an orbit
+    :param vary_par_index: The index of the parameter to vary found in args
+    :param vary_range: The range of values to vary over
+    :param args: The arguments for tbe constants of the ODE
+    :return: A list of solutions
+    """
+
+    vary_count = int((np.diff(vary_range)) / step_size)  # Number of different variable values
+    vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
+    list_of_solutions = [0] * len(vary_values)
+    for i in range(len(vary_values)):
+        if boundary_cond == 'vary_p':
+            solution_matrix = pde_solver(ode, L, T, method, boundary_cond, lambda x: vary_values[i], q_func, args)
+        elif boundary_cond == 'vary_q':
+            solution_matrix = pde_solver(ode, L, T, method, boundary_cond, p_func, lambda x: vary_values[i], args)
+        else:
+            args[vary_par_index] = vary_values[i]
+            solution_matrix = pde_solver(ode, L, T, method, boundary_cond, p_func, q_func, args)
+        list_of_solutions[i] = find_steady_state(solution_matrix)
+    return list_of_solutions, vary_values
+
+
 def continuation(diff_eq, initial_guess, step_size, vary_par_index, vary_range, orbit, discretisation, method,
                  boundary, L, T, p_func, q_func, plot, args):
     """
@@ -195,34 +215,34 @@ def continuation(diff_eq, initial_guess, step_size, vary_par_index, vary_range, 
         plt.show()
 
     elif discretisation == 'natural_parameter':
+        list_param, param_values = natural_parameter(diff_eq, initial_guess, step_size, vary_par_index, vary_range,
+                                                     orbit, False, args)
+        if len(list_param[0]) == 1:
+            plt.plot(param_values, list_param)
+        else:
+            t_remove = 0
+            if orbit:
+                t_remove = 1
+            for i in range(len(list_param[0]) - t_remove):
+                x_values = [item[i] for item in list_param]
+                plt.plot(param_values, x_values)
+        plt.show()
 
+    elif discretisation == 'pde_continuation':
         # Check if the diff_eq is a ODE or a PDE
-        if boundary != 'n/a' and boundary != 'vary_p':  # diff_eq is a PDE
-            list_param, param_values = natural_parameter(diff_eq, initial_guess, step_size, vary_par_index, vary_range,
-                                                         orbit, True, L, T, method, boundary, p, q, args)
+        if boundary != 'vary_p' and 'vary_q':  # diff_eq is a PDE
+            list_param, param_values = pde_continuation(diff_eq, step_size, vary_par_index, vary_range, L, T, method,
+                                                        boundary, p, q, args)
             print(list_param)
             plt.plot(list_param)
             plt.show()
-        elif boundary == 'vary_p':
-            p_func = lambda x: vary_range[0] + (np.diff(vary_range)) * x / T
-            solution_matrix = pde_solver(diff_eq, L, T, method, boundary, p_func, q_func, args)
-            sol_vect = solution_matrix[-1][1:-1]
-            plt.plot(sol_vect)
+        else:
+            list_param, param_values = pde_continuation(diff_eq, step_size, vary_par_index, vary_range, L, T, method,
+                                                        boundary, p, q, args)
+            plt.plot(list_param)
             plt.show()
-        elif boundary == 'vary_q':
             solution_matrix = pde_solver(diff_eq, L, T, method, boundary, p_func, q_func, args)
-        else:  # diff_eq is a ODE
-            list_param, param_values = natural_parameter(diff_eq, initial_guess, step_size, vary_par_index, vary_range,
-                                                         orbit, False, args)
-            if len(list_param[0]) == 1:
-                plt.plot(param_values, list_param)
-            else:
-                t_remove = 0
-                if orbit:
-                    t_remove = 1
-                for i in range(len(list_param[0]) - t_remove):
-                    x_values = [item[i] for item in list_param]
-                    plt.plot(param_values, x_values)
+            plt.plot(solution_matrix)
             plt.show()
 
     elif discretisation == 'pde_solve':
@@ -266,19 +286,18 @@ if __name__ == '__main__':
 
     continuation(hopf_bif, np.array([0.5, 0.5]), 0.2, 0, [0, 2], True, 'pseudo_arclength', RK4,
                  'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
-'''
+
 
     continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'pseudo_arclength', RK4,
                  'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
 
-    '''
+
 
     continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'pseudo_arclength', RK4,
                  'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
 
     continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'natural_parameter', RK4,
                  'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
-
-    continuation(u_I, np.array([0]), 0.1, 0, [3, 3.5], False, 'natural_parameter', forward_euler,
-                 'vary_p', 1, 0.5, p, q, False, np.array([3], dtype=float))
 '''
+    continuation(u_I, np.array([0]), 0.1, 0, [3, 3.5], False, 'pde_continuation', forward_euler,
+                 'vary_p', 1, 0.5, p, q, False, np.array([3], dtype=float))

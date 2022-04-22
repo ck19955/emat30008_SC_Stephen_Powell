@@ -39,42 +39,37 @@ def shooting_conditions(ode, u0, pseudo, orbit, args):
     """
 
     if pseudo:
+        # Unpack pseudo argument
         state_prediction, state_secant, param_prediction, param_secant = pseudo[1:]
         if orbit:
-            x0 = u0[:-2]
+            x0 = u0[:-2]  # Define independent variables
             t0 = u0[-2]
             vary_par = u0[-1]
             args[pseudo[0]] = vary_par
-            sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)
-
-            #print(x0)
-            #print(sol.y[:, -1])
-            #x = sol.y
-            #plt.plot(sol.y[0, :])
-            #plt.plot(sol.y[1, :])
-            #plt.show()
-            #quit()
+            sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)  # Solves ODE
 
             x_condition = x0 - sol.y[:, -1]
-            t_condition = np.asarray(ode(t0, x0, *args)[0])
+            t_condition = np.asarray(ode(t0, x0, *args)[0])  # Phase condition
+            # Pseudo condition
             pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction,
                                                                                param_secant)
-            g_condition = np.concatenate((x_condition, t_condition, pseudo), axis=None)
+            g_condition = np.concatenate((x_condition, t_condition, pseudo), axis=None)  # Group conditions together
         else:
-            x0 = u0[:-1]
+            x0 = u0[:-1]  # Define independent variables
             vary_par = u0[-1]
             args[pseudo[0]] = vary_par
             x_condition = np.asarray(ode(0, x0, *args)[0])
+            # Pseudo condition
             pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction,
                                                                                     param_secant)
-            g_condition = np.concatenate((x_condition, pseudo), axis=None)
+            g_condition = np.concatenate((x_condition, pseudo), axis=None)  # Group conditions together
     else:
-        x0 = u0[:-1]
+        x0 = u0[:-1]  # Define independent variables
         t0 = u0[-1]
-        sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)
+        sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)  # Solve ODE
         x_condition = x0 - sol.y[:, -1]
-        t_condition = np.asarray(ode(t0, x0, *args)[0])
-        g_condition = np.concatenate((x_condition, t_condition), axis=None)
+        t_condition = np.asarray(ode(t0, x0, *args)[0])  # Phase Condition
+        g_condition = np.concatenate((x_condition, t_condition), axis=None)  # Group conditions together
     return g_condition
 
 
@@ -98,7 +93,7 @@ def shooting(ode, u0, pseudo, orbit, args):
     return final
 
 
-def plot_function(ode, u0, step_size, solver, args):
+def plot_function(ode, u0, time_range, step_size, solver, args):
     """
     :param u0: Initial values
     :param step_size: maximum step-size for the solver
@@ -107,7 +102,7 @@ def plot_function(ode, u0, step_size, solver, args):
     """
     x0 = u0[:-1]
     t0 = u0[-1]
-    times = np.linspace(0, 100, num=1000)
+    times = np.linspace(0, time_range, num=1000)
     data_values = np.asarray(solve_ode(times, x0, step_size, solver, ode, args))
     plt.plot(times, data_values[:, 0])
     plt.plot(times, data_values[:, 1])
@@ -136,11 +131,11 @@ if __name__ == '__main__':
     #print(shooting(hopf_bif, np.array([1, 1, 8]), False, False, args))
 
     # Plots the solved ODE
-    times1 = np.linspace(0, 400, num=1000)
+    #times1 = np.linspace(0, 400, num=1000)
     # RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
     #RK4_values = np.asarray(solve_ode(times1, np.array([0.3, 0.1]), 0.1, RK4, hopf_bif, args))
     #init_vals = isolate_orbit(RK4_values, times1)
-    plot_function(hopf_bif, shooting(hopf_bif, np.array([0.5, 0.5, 20]), False, True, args), 0.1, RK4, args)
+    plot_function(hopf_bif, shooting(hopf_bif, np.array([0.5, 0.5, 20]), False, True, args), 10, 0.1, RK4, args)
 
 
 

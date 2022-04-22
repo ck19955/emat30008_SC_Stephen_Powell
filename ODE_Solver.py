@@ -35,7 +35,7 @@ def euler_step(t_n, x_n, step_size, ode, args):
 
 def RK4(t_n, x_n, step_size, ode, args):
     """
-    The RK4() function executes a single step of the 4th Order Runge Kutta method for given value, t_n
+    Executes a single step of the 4th Order Runge Kutta method for given value, t_n
 
     Parameters:
         t_n         - The value of the independent variable
@@ -55,7 +55,7 @@ def RK4(t_n, x_n, step_size, ode, args):
 
 def solve_to(t_0, t_end, x_0, deltaT_max, method, ode, args):
     """
-    The solve_to() function solves an ODE for an array of values of the independent variable.
+    Solves an ODE for an array of values of the independent variable.
 
     Parameters:
         t_0         - The initial value of the independent variable
@@ -81,7 +81,7 @@ def solve_to(t_0, t_end, x_0, deltaT_max, method, ode, args):
 
 def solve_ode(t_values, x_0, deltaT_max, method, ode, args):
     """
-    The solve_ode() function solves an ODE from an initial value, t_0 to a final value t_end. However, the difference
+    Solves an ODE from an initial value, t_0 to a final value t_end. However, the difference
     between the two values must be smaller than deltaT_max.
 
     Parameters:
@@ -104,7 +104,7 @@ def solve_ode(t_values, x_0, deltaT_max, method, ode, args):
 
 def error_plot(t_values, x_0, ode, exact, args):
     """
-    The error_plot() function examines the change in error when varying the step-size for various numerical methods. In
+    Examines the change in error when varying the step-size for various numerical methods. In
     addition, it compares the time taken for both the euler method and fourth order runge kutta (RK4 to produce a
     solution to the ODE with the same magnitude of error.
 
@@ -152,7 +152,7 @@ def error_plot(t_values, x_0, ode, exact, args):
 
 def plot_approx(t_values, x_values, step_size, ode, exact, args):
     """
-    The plot_approx() function plots the numerical solutions from the numerical methods.
+    Plots the numerical solutions from the numerical methods.
 
     Parameters:
         t_values        - The range of values of the independent variable
@@ -170,15 +170,22 @@ def plot_approx(t_values, x_values, step_size, ode, exact, args):
     plt.plot([item[0] for item in exact_values], [item[1] for item in exact_values])
     plt.plot(RK4_values[:, 0], RK4_values[:, 1])
     plt.plot(euler_values[:, 0], euler_values[:, 1])
-    plt.legend()
+    #plt.legend()
     plt.show()
     return
 
 
 if __name__ == '__main__':
-    times1 = np.linspace(0, 20, num=50)
+    times1 = np.linspace(0, 20, num=100)
+    #RK4_values = np.asarray(solve_ode(times1, np.array([3, 4]), 0.1, RK4, hopf_bif, [0.2]))
+    RK4_values = np.asarray(solve_ode(times1, np.array([3, 4]), 0.1, RK4, ode_second_order, []))
+    exact = math.exp(times1)
+    print(RK4_values)
+    print(exact)
+    plt.plot(RK4_values)
+    plt.show()
     # times = [0, 1]
     # error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1, ode_first_order, exponential, [])
-    #plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order, [])
-    #plot_approx(times1, np.array([3, 4]), 0.1, hopf_bif, exact_hopf_bif, [0.2])
+    plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order, [])
+    plot_approx(times1, np.array([3, 4]), 0.1, hopf_bif, exact_hopf_bif, [0.2])
 

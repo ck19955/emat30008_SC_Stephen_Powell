@@ -62,26 +62,42 @@ def test_pseudo_arclength():
 
 # Test pde forward euler
 def test_forward_euler():
-    pass
+    L = 1
+    T = 0.5
+    boundary_cond = 'homogenous'
+    k = 3
+    solution_matrix = pde_solver(u_I, L, T, forward_euler, boundary_cond, p, q, np.array([k]))
+    centre_solution = solution_matrix[500, 5]
+    exact_solution = u_exact(L/2, T/2, k, L)
+    assert np.isclose(centre_solution, exact_solution, rtol=1)
 
 
 # Test pde backward euler
 def test_backward_euler():
-    pass
+    L = 1
+    T = 0.5
+    boundary_cond = 'homogenous'
+    k = 3
+    solution_matrix = pde_solver(u_I, L, T, backward_euler, boundary_cond, p, q, np.array([k]))
+    centre_solution = solution_matrix[500, 5]
+    exact_solution = u_exact(L/2, T/2, k, L)
+    assert np.isclose(centre_solution, exact_solution, rtol=1)
 
 
 # Test pde crank nicholson
 def test_crank_nicholson():
-    pass
+    L = 1
+    T = 0.5
+    boundary_cond = 'homogenous'
+    k = 3
+    solution_matrix = pde_solver(u_I, L, T, crank_nicholson, boundary_cond, p, q, np.array([k]))
+    centre_solution = solution_matrix[500, 5]
+    exact_solution = u_exact(L/2, T/2, k, L)
+    assert np.isclose(centre_solution, exact_solution, rtol=1)
 
 
 # Test steady state
 def test_steady_states():
-    pass
-
-
-# Different boundary conditions
-def test_boundaries():
     pass
 
 

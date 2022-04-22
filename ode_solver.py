@@ -139,6 +139,8 @@ def error_plot(t_values, x_0, ode, exact, args):
             time_eul = time_1
         if math.isclose(error_match, error_RK4[i], abs_tol=1e-5):
             time_RK4 = time_2
+    print(time_eul)
+    print(time_RK4)
 
     # Plot the errors of euler and RK4
     plt.loglog(step_sizes, error_eul, label='Euler Method')
@@ -166,24 +168,31 @@ def plot_approx(t_values, x_values, step_size, ode, exact, args):
     for i in range(len(t_values)):
         exact_values[i] = exact(t_values[i], x_values, *args)
 
+    plt.plot(RK4_values, label='RK4 Method')
+    plt.plot(exact_values, label='Exact Values')
+    plt.plot(euler_values, label='Euler Method')
+    plt.ylabel("x")
+    plt.xlabel("Time")
+    plt.legend(prop={'size': 9})
+    plt.show()
+
     # Plot x against dx/dt
-    plt.plot([item[0] for item in exact_values], [item[1] for item in exact_values])
-    plt.plot(RK4_values[:, 0], RK4_values[:, 1])
-    plt.plot(euler_values[:, 0], euler_values[:, 1])
-    #plt.legend()
+    plt.plot([item[0] for item in exact_values], [item[1] for item in exact_values], label='Exact Values')
+    plt.plot(RK4_values[:, 0], RK4_values[:, 1], label='RK4 Method')
+    plt.plot(euler_values[:, 0], euler_values[:, 1], label='Euler Method')
+    plt.ylabel("x")
+    plt.xlabel("dx/dt")
+    plt.legend()
     plt.show()
     return
 
 
 if __name__ == '__main__':
     times1 = np.linspace(0, 20, num=100)
-    #RK4_values = np.asarray(solve_ode(times1, np.array([3, 4]), 0.1, RK4, hopf_bif, [0.2]))
-    RK4_values = np.asarray(solve_ode(times1, np.array([3, 4]), 0.1, RK4, ode_second_order, []))
-    exact = math.exp(times1)
-    plt.plot(RK4_values)
-    plt.show()
-    # times = [0, 1]
-    # error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1, ode_first_order, exponential, [])
+    # RK4_values = np.asarray(solve_ode(times1, np.array([3, 4]), 0.1, RK4, hopf_bif, [0.2]))
+
+    times = [0, 1]
+    #error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1, ode_first_order, exponential, [])
     plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order, [])
-    plot_approx(times1, np.array([3, 4]), 0.1, hopf_bif, exact_hopf_bif, [0.2])
+    #plot_approx(times1, np.array([3, 4]), 0.1, hopf_bif, exact_hopf_bif, [0.2])
 

@@ -47,7 +47,7 @@ def forward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
     solution_matrix[0] = u_vect
 
     # Check boundary conditions
-    if bound_cond == 'dirichlet':
+    if bound_cond == 'dirichlet' or bound_cond == 'vary_p' or bound_cond == 'vary_q':
         A = np.diag([1-2*lmbda] * (mx - 1)) + np.diag([lmbda] * (mx - 2), -1) + np.diag([lmbda] * (mx - 2), 1)
         additive_vector = np.zeros(mx - 1)
 
@@ -74,7 +74,8 @@ def forward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
             additive_vector[0] = p_func(i)
             additive_vector[-1] = q_func(i)
             solution_matrix[i+1][1:-1] = np.dot(A, solution_matrix[i][1:-1]) + lmbda*additive_vector
-
+            solution_matrix[i+1][0] = additive_vector[0]
+            solution_matrix[i+1][-1] = additive_vector[-1]
         elif bound_cond == 'neumann':
             additive_vector[0] = -p_func(i)
             additive_vector[-1] = q_func(i)
@@ -155,6 +156,8 @@ def backward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
             additive_vector[0] = p_func(i)
             additive_vector[-1] = q_func(i)
             solution_matrix[i+1][1:-1] = np.linalg.solve(A, solution_matrix[i][1:-1] + lmbda*additive_vector)
+            solution_matrix[i+1][0] = additive_vector[0]
+            solution_matrix[i+1][-1] = additive_vector[-1]
         elif bound_cond == 'neumann':
             additive_vector[0] = -p_func(i)
             additive_vector[-1] = q_func(i)
@@ -240,6 +243,8 @@ def crank_nicholson(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
             additive_vector[0] = p_func(i)
             additive_vector[-1] = q_func(i)
             solution_matrix[i+1][1:-1] = np.linalg.solve(A, np.dot(B, solution_matrix[i][1:-1]) + lmbda*additive_vector)
+            solution_matrix[i+1][0] = additive_vector[0]
+            solution_matrix[i+1][-1] = additive_vector[-1]
         elif bound_cond == 'neumann':
             additive_vector[0] = -p_func(i)
             additive_vector[-1] = q_func(i)
@@ -292,16 +297,22 @@ def pde_solver(pde, L, T, method, bound_cond, p_func, q_func, args):
     lmbda = args[0]*deltat/(deltax**2)    # mesh fourier number
 
     # Solve PDE
-    u_vect = method(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func)[-1][1:-1]
+    solution_matrix = method(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func)
+    return solution_matrix
 
-    plt.plot(u_vect)
-    plt.show()
-    return u_vect
+
+def find_steady_state(solution_matrix):
+    steady_state = None
+    for i in range(len(solution_matrix)-1):
+        if np.allclose(solution_matrix[i], solution_matrix[i+1], rtol=1e-05):
+            steady_state = solution_matrix[i]
+            break
+    return steady_state
 
 
 if __name__ == '__main__':
     # Set problem parameters/functions
-    k = 1.0   # diffusion constant
+    k = 3.0   # diffusion constant
     L = 1.0         # length of spatial domain
     T = 0.5         # total time to solve for
 
@@ -315,6 +326,6 @@ if __name__ == '__main__':
     boundary_cond3 = 'neumann'
     boundary_cond4 = 'periodic'
 
-    pde_solver(u_I, L, T, backward_euler, boundary_cond1, p, q, np.array([k]))
-    pde_solver(u_I, L, T, forward_euler, boundary_cond1, p, q, np.array([k]))
-    pde_solver(u_I, L, T, crank_nicholson, boundary_cond1, p, q, np.array([k]))
+    pde_solver(u_I, L, T, backward_euler, boundary_cond2, p, q, np.array([k]))
+    pde_solver(u_I, L, T, forward_euler, boundary_cond2, p, q, np.array([k]))
+    pde_solver(u_I, L, T, crank_nicholson, boundary_cond2, p, q, np.array([k]))

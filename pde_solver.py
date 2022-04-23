@@ -257,7 +257,7 @@ def crank_nicholson(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
     return solution_matrix
 
 
-def pde_solver(pde, L, T, method, bound_cond, p_func, q_func, args):
+def pde_solver(pde, L, T, mx, mt, method, bound_cond, p_func, q_func, args):
     """
     Uses a given finite difference method to solve a given PDE
 
@@ -286,8 +286,8 @@ def pde_solver(pde, L, T, method, bound_cond, p_func, q_func, args):
     """
 
     # Set numerical parameters
-    mx = 10     # number of gridpoints in space
-    mt = 1000   # number of gridpoints in time
+    # mx number of gridpoints in space
+    # mt number of gridpoints in time
 
     # Set up the numerical environment variables
     x = np.linspace(0, L, mx+1)     # mesh points in space
@@ -310,22 +310,56 @@ def find_steady_state(solution_matrix):
     return steady_state
 
 
+def pde_error_plot(pde, L, T, mx, mt, bound_cond, p_func, q_func, args):
+    # Create exact solution matrix
+    exact_solution = np.zeros((mt, mx+1))
+    for i in range(mt):
+        for j in range(mx+1):
+            exact_solution[i, j] = u_exact(x[j], t[i], k, L)
+
+    # Create solution a matrix for each method
+    forward_sol = pde_solver(pde, L, T, mx, mt, forward_euler, bound_cond, p_func, q_func, args)
+    backward_sol = pde_solver(pde, L, T, mx, mt, backward_euler, bound_cond, p_func, q_func, args)
+    crank_sol = pde_solver(pde, L, T, mx, mt, crank_nicholson, bound_cond, p_func, q_func, args)
+
+    # Calculate the error at each time step for each method
+    forward_error = (np.square(forward_sol - exact_solution)).mean(axis=1)
+    backward_error = (np.square(backward_sol - exact_solution)).mean(axis=1)
+    crank_error = (np.square(crank_sol - exact_solution)).mean(axis=1)
+
+    plt.plot(forward_error, label='Forward Euler')
+    #plt.plot(backward_error, label='Backward Euler')
+    #plt.plot(crank_error, label='Crank')
+    plt.legend()
+    plt.xlabel('Time', fontsize=14)
+    plt.ylabel('Mean Square Error', fontsize=14)
+    plt.yticks(fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.show()
+
+
 if __name__ == '__main__':
     # Set problem parameters/functions
-    k = 3.0   # diffusion constant
+    k = 11   # diffusion constant
     L = 1.0         # length of spatial domain
     T = 0.5         # total time to solve for
+    mx = 10     # number of gridpoints in space
+    mt = 1000   # number of gridpoints in time
+    x = np.linspace(0, L, mx+1)     # mesh points in space
+    t = np.linspace(0, T, mt+1)     # mesh points in time
 
     # Boundary examples
-    # homogenous
-    # dirichlet
-    # neumann
-    # periodic
     boundary_cond1 = 'homogenous'
     boundary_cond2 = 'dirichlet'
     boundary_cond3 = 'neumann'
     boundary_cond4 = 'periodic'
 
-    pde_solver(u_I, L, T, backward_euler, boundary_cond2, p, q, np.array([k]))
-    pde_solver(u_I, L, T, forward_euler, boundary_cond2, p, q, np.array([k]))
-    pde_solver(u_I, L, T, crank_nicholson, boundary_cond2, p, q, np.array([k]))
+    pde_error_plot(u_I, L, T, mx, mt, boundary_cond1, p, q, np.array([k]))
+
+    #forward_steady_state = find_steady_state(forward_sol)
+
+    #plt.plot(forward_steady_state, label='Forward Euler')
+    #plt.legend()
+    #plt.show()
+
+

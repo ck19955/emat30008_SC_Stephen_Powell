@@ -82,8 +82,10 @@ def test_forward_euler():
     T = 0.5
     boundary_cond = 'homogenous'
     k = 3
-    solution_matrix = pde_solver(u_I, L, T, forward_euler, boundary_cond, p, q, np.array([k]))
-    centre_solution = solution_matrix[500, 5]
+    mx = 10
+    mt = 1000
+    solution_matrix = pde_solver(u_I, L, T, mx, mt, forward_euler, boundary_cond, p, q, np.array([k]))
+    centre_solution = solution_matrix[int(mt/2), int(mx/2)]
     exact_solution = u_exact(L/2, T/2, k, L)
     assert np.isclose(centre_solution, exact_solution, rtol=1)
 
@@ -94,8 +96,10 @@ def test_backward_euler():
     T = 0.5
     boundary_cond = 'homogenous'
     k = 3
-    solution_matrix = pde_solver(u_I, L, T, backward_euler, boundary_cond, p, q, np.array([k]))
-    centre_solution = solution_matrix[500, 5]
+    mx = 10
+    mt = 1000
+    solution_matrix = pde_solver(u_I, L, T, mx, mt, backward_euler, boundary_cond, p, q, np.array([k]))
+    centre_solution = solution_matrix[int(mt/2), int(mx/2)]
     exact_solution = u_exact(L/2, T/2, k, L)
     assert np.isclose(centre_solution, exact_solution, rtol=1)
 
@@ -106,8 +110,10 @@ def test_crank_nicholson():
     T = 0.5
     boundary_cond = 'homogenous'
     k = 3
-    solution_matrix = pde_solver(u_I, L, T, crank_nicholson, boundary_cond, p, q, np.array([k]))
-    centre_solution = solution_matrix[500, 5]
+    mx = 10
+    mt = 1000
+    solution_matrix = pde_solver(u_I, L, T, mx, mt, crank_nicholson, boundary_cond, p, q, np.array([k]))
+    centre_solution = solution_matrix[int(mt/2), int(mx/2)]
     exact_solution = u_exact(L/2, T/2, k, L)
     assert np.isclose(centre_solution, exact_solution, rtol=1)
 

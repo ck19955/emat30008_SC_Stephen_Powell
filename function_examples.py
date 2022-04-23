@@ -61,6 +61,12 @@ def u_I(x, l):
     return y
 
 
+def alternate_u_I(x, l):
+    # initial temperature distribution
+    y = (np.sin(pi*x/l))**2
+    return y
+
+
 def u_exact(x, t, k, l):
     # the exact solution to the temperature equation
     y = np.exp(-k*(pi**2/l**2)*t)*np.sin(pi*x/l)

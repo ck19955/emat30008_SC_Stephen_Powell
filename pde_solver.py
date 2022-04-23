@@ -35,7 +35,7 @@ def forward_euler(pde, L, lmbda, mx, mt, bound_cond, p_func, q_func):
 
     # Check whether forward_euler method is suitable
     if not 0 < lmbda < 1/2:
-        raise RuntimeError("Invalid value for lmbda")
+        raise ValueError("Invalid value for lmbda")
 
     # Evaluate initial solution values
     u_vect = np.linspace(0, L, mx + 1)
@@ -302,7 +302,7 @@ def pde_solver(pde, L, T, mx, mt, method, bound_cond, p_func, q_func, args):
 
 
 def find_steady_state(solution_matrix):
-    steady_state = None
+    steady_state = []
     for i in range(len(solution_matrix)-1):
         if np.allclose(solution_matrix[i], solution_matrix[i+1], rtol=1e-05):
             steady_state = solution_matrix[i]
@@ -328,8 +328,8 @@ def pde_error_plot(pde, L, T, mx, mt, bound_cond, p_func, q_func, args):
     crank_error = (np.square(crank_sol - exact_solution)).mean(axis=1)
 
     plt.plot(forward_error, label='Forward Euler')
-    #plt.plot(backward_error, label='Backward Euler')
-    #plt.plot(crank_error, label='Crank')
+    plt.plot(backward_error, label='Backward Euler')
+    plt.plot(crank_error, label='Crank')
     plt.legend()
     plt.xlabel('Time', fontsize=14)
     plt.ylabel('Mean Square Error', fontsize=14)
@@ -340,7 +340,7 @@ def pde_error_plot(pde, L, T, mx, mt, bound_cond, p_func, q_func, args):
 
 if __name__ == '__main__':
     # Set problem parameters/functions
-    k = 11   # diffusion constant
+    k = 3   # diffusion constant
     L = 1.0         # length of spatial domain
     T = 0.5         # total time to solve for
     mx = 10     # number of gridpoints in space
@@ -354,12 +354,32 @@ if __name__ == '__main__':
     boundary_cond3 = 'neumann'
     boundary_cond4 = 'periodic'
 
+    # Plot the solved steady state from the pde
+    forward_sol = pde_solver(u_I, L, T, mx, mt, forward_euler, boundary_cond1, p, q, np.array([k]))
+    forward_steady_state = find_steady_state(forward_sol)
+
+    if forward_steady_state.size == 0:
+        raise ValueError("No steady state found")
+    else:
+        plt.plot(forward_steady_state, label='Forward Euler')
+        plt.xlabel('x', fontsize=14)
+        plt.ylabel('u(x,t)', fontsize=14)
+        plt.yticks(fontsize=12)
+        plt.xticks(fontsize=12)
+        plt.show()
+
+    # Plot the solved steady state from the alternate pde
+    forward_sol_alt = pde_solver(alternate_u_I, L, T, mx, mt, forward_euler, boundary_cond1, p, q, np.array([k]))
+    forward_steady_state_alt = find_steady_state(forward_sol_alt)
+    if forward_steady_state_alt.size == 0:
+        raise ValueError("No steady state found")
+    else:
+        plt.plot(forward_steady_state_alt, label='Forward Euler')
+        plt.xlabel('x', fontsize=14)
+        plt.ylabel('u(x,t)', fontsize=14)
+        plt.yticks(fontsize=12)
+        plt.xticks(fontsize=12)
+        plt.show()
+
+    # Plot the error of each method
     pde_error_plot(u_I, L, T, mx, mt, boundary_cond1, p, q, np.array([k]))
-
-    #forward_steady_state = find_steady_state(forward_sol)
-
-    #plt.plot(forward_steady_state, label='Forward Euler')
-    #plt.legend()
-    #plt.show()
-
-

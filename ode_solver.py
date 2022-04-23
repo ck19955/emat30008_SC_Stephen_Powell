@@ -181,33 +181,57 @@ def error_plot(t_values, x_0, ode, exact, args):
     step_sizes = np.logspace(-6, 0, 10)
     error_eul = np.zeros(len(step_sizes))
     error_rk4 = np.zeros(len(step_sizes))
+    error_improv = np.zeros(len(step_sizes))
+    error_heun = np.zeros(len(step_sizes))
     error_match = 1e-6
-    time_eul = 0
-    time_rk4 = 0
+    final_time_eul = 0
+    final_time_rk4 = 0
+    final_time_improv = 0
+    final_time_heun = 0
     for i in range(len(step_sizes)):
         init_time = time.perf_counter()
         predict_eul = solve_ode(t_values, x_0, step_sizes[i], euler_step, ode, args)
-        time_1 = time.perf_counter() - init_time
+        time_eul = time.perf_counter() - init_time
+
         init_time = time.perf_counter()
         predict_rk4 = solve_ode(t_values, x_0, step_sizes[i], rk4, ode, args)
-        time_2 = time.perf_counter() - init_time
+        time_rk4 = time.perf_counter() - init_time
+
+        init_time = time.perf_counter()
+        predict_improv = solve_ode(t_values, x_0, step_sizes[i], improved_euler_step, ode, args)
+        time_improv = time.perf_counter() - init_time
+
+        init_time = time.perf_counter()
+        predict_heun = solve_ode(t_values, x_0, step_sizes[i], heun_step, ode, args)
+        time_heun = time.perf_counter() - init_time
+
         error_eul[i] = abs(predict_eul[-1] - x_value)
         error_rk4[i] = abs(predict_rk4[-1] - x_value)
+        error_improv[i] = abs(predict_improv[-1] - x_value)
+        error_heun[i] = abs(predict_heun[-1] - x_value)
         if math.isclose(error_match, error_eul[i], abs_tol=1e-5):
-            time_eul = time_1
+            final_time_eul = time_eul
         if math.isclose(error_match, error_rk4[i], abs_tol=1e-5):
-            time_rk4 = time_2
-    print(time_eul)
-    print(time_rk4)
+            final_time_rk4 = time_rk4
+        if math.isclose(error_match, error_improv[i], abs_tol=1e-5):
+            final_time_improv = time_improv
+        if math.isclose(error_match, error_heun[i], abs_tol=1e-5):
+            final_time_heun = time_heun
+    print('Time taken by Euler Method: ', final_time_eul)
+    print('Time taken by 4th Order Runge Kutta Method: ', final_time_rk4)
+    print('Time taken by Improved Euler Method: ', final_time_improv)
+    print('Time taken by Heun Method: ', final_time_heun)
 
     # Plot the errors of euler and RK4
     plt.loglog(step_sizes, error_eul, label='Euler Method')
     plt.loglog(step_sizes, error_rk4, label='rk4 Method')
+    plt.loglog(step_sizes, error_improv, label='Improved Euler Method')
+    plt.loglog(step_sizes, error_heun, label='Heun Method')
     plt.legend()
     plt.ylabel("Error of approximation")
     plt.xlabel("Size of timestep")
     plt.show()
-    return error_eul, error_rk4, time_eul, time_rk4
+    return
 
 
 def plot_approx(t_values, x_values, step_size, ode, exact, args):
@@ -228,6 +252,7 @@ def plot_approx(t_values, x_values, step_size, ode, exact, args):
     for i in range(len(t_values)):
         exact_values[i] = exact(t_values[i], x_values, *args)
 
+    # Plot solution of ode
     plt.plot(rk4_values, label='rk4 Method')
     plt.plot(exact_values, label='Exact Values')
     plt.plot(euler_values, label='Euler Method')
@@ -250,11 +275,22 @@ def plot_approx(t_values, x_values, step_size, ode, exact, args):
 
 
 if __name__ == '__main__':
+    # Plots the errors of each one-step integration method and prints the time take for each method to reach an accuracy
+    # of 1e-6.
+    error_plot([0, 1], 1, ode_first_order, exponential, [])
+
+    '''
+    Time taken by Euler Method:  0.24495746399999874
+    Time taken by 4th Order Runge Kutta Method:  0.0001070120000008501
+    Time taken by Improved Euler Method:  0.0010338849999982358
+    Time taken by Heun Method:  9.856900000215774e-05
+    '''
+
+    # Plots the solutions of the ode from the different integration methods and plots the limitation in the use of
+    # Euler's method.
     times1 = np.linspace(0, 20, num=100)
     plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order, [])
 
-    times = [0, 1]
-    # error_1, error_2, time_euler, time_RungeKutta = error_plot(times, 1, ode_first_order, exponential, [])
 
     # RK4_values = np.asarray(solve_ode(times1, np.array([3, 4]), 0.1, RK4, hopf_bif, [0.2]))
     #plot_approx(times1, np.array([3, 4]), 0.1, hopf_bif, exact_hopf_bif, [0.2])

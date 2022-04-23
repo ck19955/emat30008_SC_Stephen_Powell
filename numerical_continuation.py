@@ -17,15 +17,15 @@ def natural_parameter(ode, initial_guess, step_size, vary_par_index, vary_range,
     :return: A list of solutions
     """
 
-    vary_count = int((np.diff(vary_range)) / step_size)  # Number of different variable values
+    vary_count = int(abs((np.diff(vary_range))) / step_size)  # Number of different variable values
     vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
     args[vary_par_index] = vary_values[1]
 
     if orbit:
         # Find the initial solution using isolate_orbit()
         times = np.linspace(0, 100, num=1000)  # Range of t_values to find orbit
-        RK4_values = np.asarray(solve_ode(times, initial_guess, 0.01, rk4, ode, args))
-        init_vals = isolate_orbit(RK4_values, times)
+        rk4_values = np.asarray(solve_ode(times, initial_guess, 0.01, rk4, ode, args))
+        init_vals = isolate_orbit(rk4_values, times)
 
     else:
         # If shooting is not required
@@ -75,21 +75,21 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
     if orbit:
         # Find first initial solution
         times = np.linspace(0, 500, num=2000)  # Range of t_values to find orbit
-        RK4_values = np.asarray(solve_ode(times, initial_guess, 0.1, rk4, ode, args))
+        rk4_values = np.asarray(solve_ode(times, initial_guess, 0.1, rk4, ode, args))
 
-        # plt.plot(RK4_values)
+        # plt.plot(rk4_values)
         # plt.show()
 
         # First known solution
-        u0 = np.array(isolate_orbit(RK4_values, times))
+        u0 = np.array(isolate_orbit(rk4_values, times))
         p0 = vary_values[1]
 
         # Find second initial solution
         args[vary_par_index] = vary_values[2]
-        RK4_values = np.asarray(solve_ode(times, u0[:-1], 0.1, rk4, ode, args))
+        rk4_values = np.asarray(solve_ode(times, u0[:-1], 0.1, rk4, ode, args))
 
         # Second known solution
-        u1 = np.array(isolate_orbit(RK4_values, times))
+        u1 = np.array(isolate_orbit(rk4_values, times))
         p1 = vary_values[2]
     else:
         if pde:
@@ -127,7 +127,6 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
         p1 = init_vals[-1]
         param_secant = p1 - p0
         predict_pi = p1 + param_secant
-        print(init_vals)
         list_of_solutions.append(init_vals)
         if vary_range[1] < vary_range[0]:
             statement = vary_range[0] > p1 > vary_range[1]
@@ -171,7 +170,7 @@ def pde_continuation(ode, step_size, vary_par_index, vary_range, L, T, method,
 
 
 def continuation(diff_eq, initial_guess, step_size, vary_par_index, vary_range, orbit, discretisation, method,
-                 boundary, L, T, p_func, q_func, plot, args):
+                 boundary, L, T, mx, mt, p_func, q_func, plot, args):
     """
     Solves a given pde using the forward euler method
 
@@ -212,11 +211,16 @@ def continuation(diff_eq, initial_guess, step_size, vary_par_index, vary_range, 
             for i in range(len(list_param[0]) - t_remove):
                 x_values = [item[i] for item in list_param]
                 plt.plot(param_values, x_values)
+        plt.ylabel("u", fontsize=14)
+        plt.xlabel("Parameter Value", fontsize=14)
+        plt.yticks(fontsize=12)
+        plt.xticks(fontsize=12)
+        plt.show()
         plt.show()
 
     elif discretisation == 'natural_parameter':
         list_param, param_values = natural_parameter(diff_eq, initial_guess, step_size, vary_par_index, vary_range,
-                                                     orbit, False, args)
+                                                     orbit, args)
         if len(list_param[0]) == 1:
             plt.plot(param_values, list_param)
         else:
@@ -226,6 +230,10 @@ def continuation(diff_eq, initial_guess, step_size, vary_par_index, vary_range, 
             for i in range(len(list_param[0]) - t_remove):
                 x_values = [item[i] for item in list_param]
                 plt.plot(param_values, x_values)
+        plt.ylabel("u", fontsize=14)
+        plt.xlabel("Parameter Value", fontsize=14)
+        plt.yticks(fontsize=12)
+        plt.xticks(fontsize=12)
         plt.show()
 
     elif discretisation == 'pde_continuation':
@@ -278,26 +286,32 @@ def continuation(diff_eq, initial_guess, step_size, vary_par_index, vary_range, 
 
 if __name__ == '__main__':
     '''
-    continuation(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [0, 2], True, 'natural_parameter', rk4,
-                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
+    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'natural_parameter', rk4,
+                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
 
-    continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'natural_parameter', rk4,
-                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
+    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'pseudo_arclength', rk4,
+                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
+
+    continuation(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [0, 2], True, 'natural_parameter', rk4,
+                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
 
     continuation(hopf_bif, np.array([0.5, 0.5]), 0.2, 0, [0, 2], True, 'pseudo_arclength', rk4,
-                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
-
+                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
+'''
+    continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'natural_parameter', rk4,
+                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
 
     continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'pseudo_arclength', rk4,
-                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
-
+                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
+    '''
 
 
     continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'pseudo_arclength', rk4,
-                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
+                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
 
     continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'natural_parameter', rk4,
-                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
-'''
+                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
+
     continuation(u_I, np.array([0]), 0.1, 0, [3, 3.5], False, 'pde_continuation', forward_euler,
-                 'vary_p', 1, 0.5, p, q, False, np.array([3], dtype=float))
+                 'vary_p', 1, 0.5, 10, 1000, p, q, False, np.array([3], dtype=float))
+'''

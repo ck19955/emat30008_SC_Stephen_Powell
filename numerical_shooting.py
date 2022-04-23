@@ -24,7 +24,7 @@ def isolate_orbit(ode_data, time_data):
         if previous_value:
             if math.isclose(x_data[i], previous_value, abs_tol=1e-4):
                 period = time_data[i] - previous_time
-                return x_data[i], y_data[i], period
+                return [x_data[i], y_data[i], period]
         previous_value = x_data[i]
         previous_time = time_data[i]
     raise RuntimeError("No orbit found")
@@ -100,15 +100,16 @@ def plot_function(ode, u0, time_range, step_size, solver, args):
     :param solver: chosen solver (not yet implemented, currently set RK4 as default)
     :return: Plot of the isolated orbit found by the numerical shooter
     """
-    print(u0)
     x0 = u0[:-1]
     t0 = u0[-1]
-    times = np.linspace(0, t0, num=1000)
+    times = np.linspace(0, time_range, num=1000)
     data_values = np.asarray(solve_ode(times, x0, step_size, solver, ode, args))
     plt.plot(times, data_values[:, 0])
     plt.plot(times, data_values[:, 1])
-    plt.xlabel('time')
-    plt.ylabel('u')
+    plt.xlabel('Time', fontsize=14)
+    plt.ylabel('u', fontsize=14)
+    plt.yticks(fontsize=12)
+    plt.xticks(fontsize=12)
     plt.show()
 
 
@@ -116,8 +117,6 @@ if __name__ == '__main__':
 
     '''
     # args = np.array([1, -1])
-
-    #print(shooting(pred_prey, np.array([1, 1, 20]), False, args))
     
 
     # Plots the solved ODE
@@ -128,48 +127,59 @@ if __name__ == '__main__':
     init_vals = isolate_orbit(RK4_values, times1)
     print(init_vals)
     plot_function(pred_prey, init_vals, 400, 0.1, RK4, args)
-'''
+
 
     args = np.array([0.04])
     #print(shooting(hopf_bif, np.array([1, 1, 8]), False, False, args))
-
     # Plots the solved ODE
-    #times1 = np.linspace(0, 400, num=1000)
-    # RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
-    #RK4_values = np.asarray(solve_ode(times1, np.array([0.3, 0.1]), 0.1, RK4, hopf_bif, args))
-    #init_vals = isolate_orbit(RK4_values, times1)
+    times = np.linspace(0, 400, num=1000)
+    # RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, rk4, hopf_bif, args))
+    RK4_values = np.asarray(solve_ode(times, np.array([0.3, 0.1]), 0.1, rk4, hopf_bif, args))
+    init_vals = isolate_orbit(RK4_values, times)
     plot_function(hopf_bif, shooting(hopf_bif, np.array([-0.2, 0, 6]), False, True, args), 10, 0.1, rk4, args)
-
-
-
-    '''
+'''
     # Plots the solved ODE with varying b values
-    
     fig, axs = plt.subplots(2, 2)
     times1 = np.linspace(0, 200, num=1000)
-    RK4_values_1 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.15, 0.1])))
-    RK4_values_2 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.25, 0.1])))
-    RK4_values_3 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.27, 0.1])))
-    RK4_values_4 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, RK4, ode_num, np.array([1, 0.5, 0.1])))
+    rk4_values_1 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, rk4, pred_prey, np.array([1, 0.15, 0.1])))
+    rk4_values_2 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, rk4, pred_prey, np.array([1, 0.25, 0.1])))
+    rk4_values_3 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, rk4, pred_prey, np.array([1, 0.27, 0.1])))
+    rk4_values_4 = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, rk4, pred_prey, np.array([1, 0.5, 0.1])))
     
-    
-    axs[0, 0].plot(RK4_values_1[:, 0])
-    axs[0, 0].plot(RK4_values_1[:, 1])
+    axs[0, 0].plot(rk4_values_1[:, 0])
+    axs[0, 0].plot(rk4_values_1[:, 1])
     axs[0, 0].set_title('b = 0.15')
-    axs[0, 1].plot(RK4_values_2[:, 0])
-    axs[0, 1].plot(RK4_values_2[:, 1])
+    axs[0, 1].plot(rk4_values_2[:, 0])
+    axs[0, 1].plot(rk4_values_2[:, 1])
     axs[0, 1].set_title('b = 0.25')
-    axs[1, 0].plot(RK4_values_3[:, 0])
-    axs[1, 0].plot(RK4_values_3[:, 1])
+    axs[1, 0].plot(rk4_values_3[:, 0])
+    axs[1, 0].plot(rk4_values_3[:, 1])
     axs[1, 0].set_title('b = 0.27')
-    axs[1, 1].plot(RK4_values_4[:, 0])
-    axs[1, 1].plot(RK4_values_4[:, 1])
+    axs[1, 1].plot(rk4_values_4[:, 0])
+    axs[1, 1].plot(rk4_values_4[:, 1])
     axs[1, 1].set_title('b = 0.5')
     for ax in axs.flat:
         ax.set(xlabel='t', ylabel='u')
-    
     # Hide x labels and tick labels for top plots and y ticks for right plots.
     for ax in axs.flat:
         ax.label_outer()
     plt.show()
-    '''
+
+    # Plot solution of the predator-prey model
+    args = np.array([1, 0.2, 0.1])
+    times1 = np.linspace(0, 400, num=1000)
+    RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, rk4, pred_prey, args))
+    plot_function(pred_prey, np.array([1, 1, 20]), 200, 0.1, rk4, args)
+
+    # Find an orbit of the predator-prey model
+    init_vals = isolate_orbit(RK4_values, times1)
+    # State the initial values and period of the orbit
+    print('Initial values for the orbit found: ', init_vals[:-1])
+    print('Period of the orbit found: ', init_vals[-1])
+    # Plot the orbit
+    plot_function(pred_prey, init_vals, init_vals[-1], 0.1, rk4, args)
+
+    # Check if the numerical shooting function can find the same orbit found previously
+    shooting_values = shooting(pred_prey, init_vals, False, True, args)
+    print('Initial values for the orbit found from numerical shooting: ', shooting_values[:-1])
+    print('Period of the orbit found from numerical shooting: ', shooting_values[-1])

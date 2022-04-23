@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from ode_solver import RK4, solve_ode
+from ode_solver import rk4, solve_ode
 from function_examples import *
 from numerical_shooting import isolate_orbit, shooting, shooting_conditions
 from scipy.optimize import fsolve
@@ -24,7 +24,7 @@ def natural_parameter(ode, initial_guess, step_size, vary_par_index, vary_range,
     if orbit:
         # Find the initial solution using isolate_orbit()
         times = np.linspace(0, 100, num=1000)  # Range of t_values to find orbit
-        RK4_values = np.asarray(solve_ode(times, initial_guess, 0.01, RK4, ode, args))
+        RK4_values = np.asarray(solve_ode(times, initial_guess, 0.01, rk4, ode, args))
         init_vals = isolate_orbit(RK4_values, times)
 
     else:
@@ -75,7 +75,7 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
     if orbit:
         # Find first initial solution
         times = np.linspace(0, 500, num=2000)  # Range of t_values to find orbit
-        RK4_values = np.asarray(solve_ode(times, initial_guess, 0.1, RK4, ode, args))
+        RK4_values = np.asarray(solve_ode(times, initial_guess, 0.1, rk4, ode, args))
 
         # plt.plot(RK4_values)
         # plt.show()
@@ -86,7 +86,7 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
 
         # Find second initial solution
         args[vary_par_index] = vary_values[2]
-        RK4_values = np.asarray(solve_ode(times, u0[:-1], 0.1, RK4, ode, args))
+        RK4_values = np.asarray(solve_ode(times, u0[:-1], 0.1, rk4, ode, args))
 
         # Second known solution
         u1 = np.array(isolate_orbit(RK4_values, times))
@@ -278,25 +278,25 @@ def continuation(diff_eq, initial_guess, step_size, vary_par_index, vary_range, 
 
 if __name__ == '__main__':
     '''
-    continuation(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [0, 2], True, 'natural_parameter', RK4,
+    continuation(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [0, 2], True, 'natural_parameter', rk4,
                  'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
 
-    continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'natural_parameter', RK4,
+    continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'natural_parameter', rk4,
                  'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
 
-    continuation(hopf_bif, np.array([0.5, 0.5]), 0.2, 0, [0, 2], True, 'pseudo_arclength', RK4,
-                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
-
-
-    continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'pseudo_arclength', RK4,
+    continuation(hopf_bif, np.array([0.5, 0.5]), 0.2, 0, [0, 2], True, 'pseudo_arclength', rk4,
                  'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
 
 
-
-    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'pseudo_arclength', RK4,
+    continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'pseudo_arclength', rk4,
                  'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
 
-    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'natural_parameter', RK4,
+
+
+    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'pseudo_arclength', rk4,
+                 'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
+
+    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'natural_parameter', rk4,
                  'n/a', 0, 0, p, q, False, np.array([0], dtype=float))
 '''
     continuation(u_I, np.array([0]), 0.1, 0, [3, 3.5], False, 'pde_continuation', forward_euler,

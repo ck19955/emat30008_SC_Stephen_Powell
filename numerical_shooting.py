@@ -1,7 +1,7 @@
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from ode_solver import RK4, solve_ode
+from ode_solver import rk4, solve_ode
 from scipy.signal import find_peaks
 from scipy.integrate import solve_ivp
 from scipy.optimize import fsolve
@@ -138,7 +138,7 @@ if __name__ == '__main__':
     # RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, RK4, hopf_bif, args))
     #RK4_values = np.asarray(solve_ode(times1, np.array([0.3, 0.1]), 0.1, RK4, hopf_bif, args))
     #init_vals = isolate_orbit(RK4_values, times1)
-    plot_function(hopf_bif, shooting(hopf_bif, np.array([-0.2, 0, 6]), False, True, args), 10, 0.1, RK4, args)
+    plot_function(hopf_bif, shooting(hopf_bif, np.array([-0.2, 0, 6]), False, True, args), 10, 0.1, rk4, args)
 
 
 

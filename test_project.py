@@ -24,17 +24,33 @@ def test_euler():
 # Test ode rk4 solutions
 def test_rk4():
     times = np.linspace(0, 20, num=100)
-    rk4_values = np.asarray(solve_ode(times, np.array([3, 4]), 0.01, RK4, ode_second_order, []))
+    rk4_values = np.asarray(solve_ode(times, np.array([3, 4]), 0.01, rk4, ode_second_order, []))
     exact_values = exact_sol(exact_second_order, [0, 20], 100, np.array([3, 4]))
     assert np.allclose(rk4_values, exact_values, rtol=1)
+
+
+# Test ode rk4 solutions
+def test_improved_euler():
+    times = np.linspace(0, 20, num=100)
+    improved_euler_values = np.asarray(solve_ode(times, np.array([3, 4]), 0.01, improved_euler_step, ode_second_order, []))
+    exact_values = exact_sol(exact_second_order, [0, 20], 100, np.array([3, 4]))
+    assert np.allclose(improved_euler_values, exact_values, rtol=1)
+
+
+# Test ode rk4 solutions
+def test_heun():
+    times = np.linspace(0, 20, num=100)
+    heun_values = np.asarray(solve_ode(times, np.array([3, 4]), 0.01, heun_step, ode_second_order, []))
+    exact_values = exact_sol(exact_second_order, [0, 20], 100, np.array([3, 4]))
+    assert np.allclose(heun_values, exact_values, rtol=1)
 
 
 # Test orbit isolator
 def test_orbit():
     times = np.linspace(0, 400, num=1000)
-    solution_values = np.asarray(solve_ode(times, np.array([1, 1]), 0.1, RK4, pred_prey, np.array([1, 0.2, 0.1])))
+    solution_values = np.asarray(solve_ode(times, np.array([1, 1]), 0.1, rk4, pred_prey, np.array([1, 0.2, 0.1])))
     initial_orbit_values = isolate_orbit(solution_values, times)
-    data_values = np.asarray(solve_ode(times, initial_orbit_values[:-1], 0.1, RK4, pred_prey, np.array([1, 0.2, 0.1])))
+    data_values = np.asarray(solve_ode(times, initial_orbit_values[:-1], 0.1, rk4, pred_prey, np.array([1, 0.2, 0.1])))
     orbit_index = int(initial_orbit_values[-1]/(400/1000))
     assert np.allclose(initial_orbit_values[:-1], data_values[orbit_index][:-1], rtol=1)
 
@@ -44,7 +60,7 @@ def test_shooting():
     # Can it find the orbit
     args = np.array([0.04])
     times = np.linspace(0, 400, num=1000)
-    solution_values = np.asarray(solve_ode(times, np.array([0.5, 0.5]), 0.1, RK4, hopf_bif, args))
+    solution_values = np.asarray(solve_ode(times, np.array([0.5, 0.5]), 0.1, rk4, hopf_bif, args))
     initial_orbit_values = isolate_orbit(solution_values, times)
     shooting_orbit_values = shooting(hopf_bif, initial_orbit_values, False, True, args)
     assert np.allclose(initial_orbit_values[-1], shooting_orbit_values[-1], rtol=1)

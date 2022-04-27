@@ -137,7 +137,7 @@ def solve_to(t_0, t_end, x_0, deltaT_max, method, ode, args):
     return x
 
 
-def solve_ode(t_values, x_0, deltaT_max, method, ode, args):
+def solve_ode(t_values, x_0, deltaT_max, method, ode, args=None):
     """
     Solves an ODE from an initial value, t_0 to a final value t_end. However, the difference
     between the two values must be smaller than deltaT_max.
@@ -153,6 +153,9 @@ def solve_ode(t_values, x_0, deltaT_max, method, ode, args):
         x           - The final value of the dependant variable
     """
 
+    if args is None:
+        args = []
+
     x_values = [0] * len(t_values)
     x_values[0] = x_0
     for i in range(len(t_values)-1):
@@ -160,7 +163,7 @@ def solve_ode(t_values, x_0, deltaT_max, method, ode, args):
     return x_values
 
 
-def error_plot(t_values, x_0, ode, exact, args):
+def error_plot(t_values, x_0, ode, exact, args=None):
     """
     Examines the change in error when varying the step-size for various numerical methods. In
     addition, it compares the time taken for both the euler method and fourth order runge kutta (rk4 to produce a
@@ -176,6 +179,9 @@ def error_plot(t_values, x_0, ode, exact, args):
         time_eul            - The time take for the euler method to reach an error specified in the function
         time_rk4            - The time take for the rk4 method to reach an error specified in the function
     """
+
+    if args is None:
+        args = []
 
     x_value = exact(t_values[1], 0)
     step_sizes = np.logspace(-6, 0, 10)
@@ -234,7 +240,7 @@ def error_plot(t_values, x_0, ode, exact, args):
     return
 
 
-def plot_approx(t_values, x_values, step_size, ode, exact, args):
+def plot_approx(t_values, x_values, step_size, ode, exact, args=None):
     """
     Plots the numerical solutions from the numerical methods.
 
@@ -243,6 +249,9 @@ def plot_approx(t_values, x_values, step_size, ode, exact, args):
         x_values        - The initial values of the dependant variables
         step_size       - The step-size of the numerical methods to be executed
     """
+
+    if args is None:
+        args = []
 
     rk4_values = np.asarray(solve_ode(t_values, x_values, step_size, rk4, ode, args))
     euler_values = np.asarray(solve_ode(t_values, x_values, step_size, euler_step, ode, args))
@@ -277,7 +286,7 @@ def plot_approx(t_values, x_values, step_size, ode, exact, args):
 if __name__ == '__main__':
     # Plots the errors of each one-step integration method and prints the time take for each method to reach an accuracy
     # of 1e-6.
-    error_plot([0, 1], 1, ode_first_order, exponential, [])
+    error_plot([0, 1], 1, ode_first_order, exponential)
 
     '''
     Time taken by Euler Method:  0.24495746399999874
@@ -289,9 +298,6 @@ if __name__ == '__main__':
     # Plots the solutions of the ode from the different integration methods and plots the limitation in the use of
     # Euler's method.
     times1 = np.linspace(0, 20, num=100)
-    plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order, [])
+    plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order)
 
-
-    # RK4_values = np.asarray(solve_ode(times1, np.array([3, 4]), 0.1, RK4, hopf_bif, [0.2]))
-    #plot_approx(times1, np.array([3, 4]), 0.1, hopf_bif, exact_hopf_bif, [0.2])
 

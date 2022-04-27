@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from ode_solver import rk4, solve_ode
 from function_examples import *
-from numerical_shooting import isolate_orbit, shooting, shooting_conditions
+from numerical_shooting import isolate_orbit, shooting, shooting_conditions, pseudo_arclength_conditions
 from scipy.optimize import fsolve
 from pde_solver import pde_solver, forward_euler, backward_euler, crank_nicholson, find_steady_state
 
@@ -25,27 +25,45 @@ def natural_parameter(ode, initial_guess, step_size, vary_par_index, vary_range,
         # Find the initial solution using isolate_orbit()
         times = np.linspace(0, 100, num=1000)  # Range of t_values to find orbit
         rk4_values = np.asarray(solve_ode(times, initial_guess, 0.01, rk4, ode, args))
-        init_vals = isolate_orbit(rk4_values, times)
+        init_solution = isolate_orbit(rk4_values, times)
 
     else:
         # If shooting is not required
         # Find initial solution
         args[vary_par_index] = vary_range[0]
-        init_vals = fsolve(lambda x: ode(0, x, args), np.array([initial_guess]))
+        init_solution = fsolve(lambda x: ode(0, x, args), np.array([initial_guess]))
 
     list_of_solutions = [0] * len(vary_values)
-    list_of_solutions[0] = init_vals
+    list_of_solutions[0] = init_solution
+
     for i in range(1, len(vary_values)):
         args[vary_par_index] = vary_values[i]
         if orbit:
-            init_vals = shooting(ode, init_vals, [], orbit, args)
+            init_solution = shooting(ode, init_solution, shooting_conditions, [], orbit, args)
         else:
-            init_vals = fsolve(lambda x: ode(0, x, args), np.array([init_vals]))
-        list_of_solutions[i] = init_vals
+            init_solution = fsolve(lambda x: ode(0, x, args), np.array([init_solution]))
+        list_of_solutions[i] = init_solution
+
+    if len(list_of_solutions[0]) == 1:
+        plt.plot(vary_values, list_of_solutions)
+    else:
+        t_remove = 0
+        if orbit:
+            t_remove = 1
+        for i in range(len(list_of_solutions[0]) - t_remove):
+            x_values = [item[i] for item in list_of_solutions]
+            plt.plot(vary_values, x_values)
+    plt.ylabel("u", fontsize=14)
+    plt.xlabel("Parameter Value", fontsize=14)
+    plt.yticks(fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.show()
+    plt.show()
+
     return list_of_solutions, vary_values
 
 
-def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, orbit, pde, args):
+def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, orbit, args):
     """
     Executes a single step of the forward euler method for given value, t_n
 
@@ -92,12 +110,9 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
         u1 = np.array(isolate_orbit(rk4_values, times))
         p1 = vary_values[2]
     else:
-        if pde:
-            pass
-        else:
-            p0, p1 = vary_values[1], vary_values[2]
-            u0 = np.array(fsolve(lambda x: ode(0, x, p0), np.array([initial_guess])))
-            u1 = np.array(fsolve(lambda x: ode(0, x, p1), np.array([initial_guess])))
+        p0, p1 = vary_values[1], vary_values[2]
+        u0 = np.array(fsolve(lambda x: ode(0, x, p0), np.array([initial_guess])))
+        u1 = np.array(fsolve(lambda x: ode(0, x, p1), np.array([initial_guess])))
     state_secant = u1 - u0
     predict_ui = u1 + state_secant
     param_secant = p1 - p0
@@ -114,10 +129,10 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
         u0 = u1
         p0 = p1
         if orbit:
-            init_vals = shooting(ode, np.append(u1, p1), [vary_par_index, predict_ui, state_secant,
+            init_vals = shooting(ode, np.append(u1, p1), pseudo_arclength_conditions, [vary_par_index, predict_ui, state_secant,
                                                           predict_pi, param_secant], orbit, args)
         else:
-            init_vals = fsolve(lambda x: shooting_conditions(ode, x,
+            init_vals = fsolve(lambda x: pseudo_arclength_conditions(ode, x,
                                                              [vary_par_index, predict_ui, state_secant, predict_pi,
                                                               param_secant], orbit, args=args), np.append(u1, p1))
         # Update current state
@@ -134,10 +149,27 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
             statement = vary_range[0] < p1 < vary_range[1]
     u_values = [item[:-1] for item in list_of_solutions]
     param_values = [item[-1] for item in list_of_solutions]
+
+    if len(u_values[0]) == 1:
+        plt.plot(param_values, u_values)
+    else:
+        t_remove = 0
+        if orbit:
+            t_remove = 1
+        for i in range(len(u_values[0]) - t_remove):
+            x_values = [item[i] for item in u_values]
+            plt.plot(param_values, x_values)
+    plt.ylabel("u", fontsize=14)
+    plt.xlabel("Parameter Value", fontsize=14)
+    plt.yticks(fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.show()
+    plt.show()
+
     return u_values, param_values
 
 
-def pde_continuation(ode, step_size, vary_par_index, vary_range, L, T, method,
+def pde_continuation(pde, step_size, vary_par_index, vary_range, L, T, mx, mt, method,
                      boundary_cond, p_func, q_func, args):
     """
     :param q_func:
@@ -146,7 +178,7 @@ def pde_continuation(ode, step_size, vary_par_index, vary_range, L, T, method,
     :param L:
     :param T:
     :param method:
-    :param ode: Example ODE
+    :param pde: Example ODE
     :param step_size: The initial guess for isolating an orbit
     :param vary_par_index: The index of the parameter to vary found in args
     :param vary_range: The range of values to vary over
@@ -159,13 +191,22 @@ def pde_continuation(ode, step_size, vary_par_index, vary_range, L, T, method,
     list_of_solutions = [0] * len(vary_values)
     for i in range(len(vary_values)):
         if boundary_cond == 'vary_p':
-            solution_matrix = pde_solver(ode, L, T, method, boundary_cond, lambda x: vary_values[i], q_func, args)
+            solution_matrix = pde_solver(pde, L, T, mx, mt, method, boundary_cond, lambda x: vary_values[i], q_func, args)
         elif boundary_cond == 'vary_q':
-            solution_matrix = pde_solver(ode, L, T, method, boundary_cond, p_func, lambda x: vary_values[i], args)
+            solution_matrix = pde_solver(pde, L, T, mx, mt, method, boundary_cond, p_func, lambda x: vary_values[i], args)
         else:
             args[vary_par_index] = vary_values[i]
-            solution_matrix = pde_solver(ode, L, T, method, boundary_cond, p_func, q_func, args)
+            solution_matrix = pde_solver(pde, L, T, mx, mt, method, boundary_cond, p_func, q_func, args)
         list_of_solutions[i] = find_steady_state(solution_matrix)
+    if boundary_cond != 'vary_p' and 'vary_q':
+        plt.plot(list_of_solutions)
+        plt.show()
+    else:
+        plt.plot(list_of_solutions)
+        plt.show()
+        solution_matrix = pde_solver(pde, L, T, mx, mt, method, boundary_cond, p_func, q_func, args)
+        plt.plot(solution_matrix)
+        plt.show()
     return list_of_solutions, vary_values
 
 
@@ -277,7 +318,7 @@ def continuation(diff_eq, initial_guess, step_size, vary_par_index, vary_range, 
         plt.show()
 
     elif discretisation == 'shooting':
-        u_vect = shooting(diff_eq, initial_guess, False, orbit, args)
+        u_vect = shooting(diff_eq, initial_guess, shooting_conditions, False, orbit, args)
 
     elif discretisation == 'ode_solve':
         times = np.linspace(0, T, num=1000)
@@ -285,8 +326,16 @@ def continuation(diff_eq, initial_guess, step_size, vary_par_index, vary_range, 
 
 
 if __name__ == '__main__':
-    '''
-    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'natural_parameter', rk4,
+
+    #natural_parameter(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
+    #pseudo_arclength(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
+    #natural_parameter(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [0, 2], True, np.array([0], dtype=float))
+    #pseudo_arclength(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [0, 2], True, np.array([0], dtype=float))
+    #natural_parameter(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
+    #pseudo_arclength(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
+
+    pde_continuation(u_I, 0.1, 0, [3, 3.5], 1, 0.5, 10, 1000, forward_euler, 'vary_p', p, q, np.array([3], dtype=float))
+    '''continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'natural_parameter', rk4,
                  'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
 
     continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'pseudo_arclength', rk4,
@@ -297,13 +346,13 @@ if __name__ == '__main__':
 
     continuation(hopf_bif, np.array([0.5, 0.5]), 0.2, 0, [0, 2], True, 'pseudo_arclength', rk4,
                  'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
-'''
+
     continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'natural_parameter', rk4,
                  'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
 
     continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'pseudo_arclength', rk4,
                  'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
-    '''
+
 
 
     continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'pseudo_arclength', rk4,

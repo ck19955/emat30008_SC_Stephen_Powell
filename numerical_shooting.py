@@ -37,43 +37,44 @@ def shooting_conditions(ode, u0, pseudo, orbit, args):
     :param args: Arguments for the ODE
     :return: The augmented equation suitable for fsolve()
     """
-
-    if pseudo:
-        # Unpack pseudo argument
-        state_prediction, state_secant, param_prediction, param_secant = pseudo[1:]
-        if orbit:
-            x0 = u0[:-2]  # Define independent variables
-            t0 = u0[-2]
-            vary_par = u0[-1]
-            args[pseudo[0]] = vary_par
-            sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)  # Solves ODE
-
-            x_condition = x0 - sol.y[:, -1]
-            t_condition = np.asarray(ode(t0, x0, *args)[0])  # Phase condition
-            # Pseudo condition
-            pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction,
-                                                                               param_secant)
-            g_condition = np.concatenate((x_condition, t_condition, pseudo), axis=None)  # Group conditions together
-        else:
-            x0 = u0[:-1]  # Define independent variables
-            vary_par = u0[-1]
-            args[pseudo[0]] = vary_par
-            x_condition = np.asarray(ode(0, x0, *args)[0])
-            # Pseudo condition
-            pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction,
-                                                                                    param_secant)
-            g_condition = np.concatenate((x_condition, pseudo), axis=None)  # Group conditions together
-    else:
-        x0 = u0[:-1]  # Define independent variables
-        t0 = u0[-1]
-        sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)  # Solve ODE
-        x_condition = x0 - sol.y[:, -1]
-        t_condition = np.asarray(ode(t0, x0, *args)[0])  # Phase Condition
-        g_condition = np.concatenate((x_condition, t_condition), axis=None)  # Group conditions together
+    x0 = u0[:-1]  # Define independent variables
+    t0 = u0[-1]
+    sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)  # Solve ODE
+    x_condition = x0 - sol.y[:, -1]
+    t_condition = np.asarray(ode(t0, x0, *args)[0])  # Phase Condition
+    g_condition = np.concatenate((x_condition, t_condition), axis=None)  # Group conditions together
     return g_condition
 
 
-def shooting(ode, u0, pseudo, orbit, args):
+def pseudo_arclength_conditions(ode, u0, pseudo, orbit, args):
+    # Unpack pseudo argument
+    state_prediction, state_secant, param_prediction, param_secant = pseudo[1:]
+    if orbit:
+        x0 = u0[:-2]  # Define independent variables
+        t0 = u0[-2]
+        vary_par = u0[-1]
+        args[pseudo[0]] = vary_par
+        sol = solve_ivp(ode, (0, t0), x0, max_step=1e-2, args=args)  # Solves ODE
+
+        x_condition = x0 - sol.y[:, -1]
+        t_condition = np.asarray(ode(t0, x0, *args)[0])  # Phase condition
+        # Pseudo condition
+        pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction,
+                                                                           param_secant)
+        g_condition = np.concatenate((x_condition, t_condition, pseudo), axis=None)  # Group conditions together
+    else:
+        x0 = u0[:-1]  # Define independent variables
+        vary_par = u0[-1]
+        args[pseudo[0]] = vary_par
+        x_condition = np.asarray(ode(0, x0, *args)[0])
+        # Pseudo condition
+        pseudo = np.dot(u0[:-1] - state_prediction, state_secant) + np.dot(vary_par - param_prediction,
+                                                                           param_secant)
+        g_condition = np.concatenate((x_condition, pseudo), axis=None)  # Group conditions together
+    return g_condition
+
+
+def shooting(ode, u0, conditions, pseudo, orbit, args):
     """"
     A function that uses numerical shooting to find limit cycles of a specified ODE.
 
@@ -89,7 +90,7 @@ def shooting(ode, u0, pseudo, orbit, args):
     for the limit cycle. If the numerical root finder failed, the
     returned array is empty.
     """
-    final = fsolve(lambda x: shooting_conditions(ode, x, pseudo, orbit, args=args), u0)
+    final = fsolve(lambda x: conditions(ode, x, pseudo, orbit, args=args), u0)
     return final
 
 
@@ -130,14 +131,14 @@ if __name__ == '__main__':
 
 
     args = np.array([0.04])
-    #print(shooting(hopf_bif, np.array([1, 1, 8]), False, False, args))
+    #print(shooting(hopf_bif, np.array([1, 1, 8]), shooting_conditions, False, False, args))
     # Plots the solved ODE
     times = np.linspace(0, 400, num=1000)
     # RK4_values = np.asarray(solve_ode(times1, np.array([0.9, 0]), 0.1, rk4, hopf_bif, args))
     RK4_values = np.asarray(solve_ode(times, np.array([0.3, 0.1]), 0.1, rk4, hopf_bif, args))
     init_vals = isolate_orbit(RK4_values, times)
-    plot_function(hopf_bif, shooting(hopf_bif, np.array([-0.2, 0, 6]), False, True, args), 10, 0.1, rk4, args)
-'''
+    plot_function(hopf_bif, shooting(hopf_bif, np.array([-0.2, 0, 6]), shooting_conditions, False, True, args), 10, 0.1, rk4, args)
+
     # Plots the solved ODE with varying b values
     fig, axs = plt.subplots(2, 2)
     times1 = np.linspace(0, 200, num=1000)
@@ -164,9 +165,9 @@ if __name__ == '__main__':
     for ax in axs.flat:
         ax.label_outer()
     plt.show()
-
+'''
     # Plot solution of the predator-prey model
-    args = np.array([1, 0.2, 0.1])
+    args = np.array([1, 0.4, 0.1])
     times1 = np.linspace(0, 400, num=1000)
     RK4_values = np.asarray(solve_ode(times1, np.array([1, 1]), 0.1, rk4, pred_prey, args))
     plot_function(pred_prey, np.array([1, 1, 20]), 200, 0.1, rk4, args)
@@ -180,6 +181,8 @@ if __name__ == '__main__':
     plot_function(pred_prey, init_vals, init_vals[-1], 0.1, rk4, args)
 
     # Check if the numerical shooting function can find the same orbit found previously
-    shooting_values = shooting(pred_prey, init_vals, False, True, args)
+    shooting_values = shooting(pred_prey, init_vals, shooting_conditions, False, True, args)
     print('Initial values for the orbit found from numerical shooting: ', shooting_values[:-1])
     print('Period of the orbit found from numerical shooting: ', shooting_values[-1])
+
+    plot_function(pred_prey, shooting_values, shooting_values[-1], 0.1, rk4, args)

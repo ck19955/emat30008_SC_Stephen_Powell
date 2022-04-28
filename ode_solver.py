@@ -134,6 +134,7 @@ def solve_to(t_0, t_end, x_0, deltaT_max, method, ode, args):
             t += deltaT_max
         else:
             deltaT_max = t_end - t  # Reduces deltaT_max to fit next iteration perfectly
+            # This coding decision was chosen to ensure the final time value, t_end is accounted for
     return x
 
 
@@ -153,10 +154,10 @@ def solve_ode(t_values, x_0, deltaT_max, method, ode, args=None):
         x           - The final value of the dependant variable
     """
 
-    if args is None:
-        args = []
+    if args is None:  # args cannot be passed through as None because this induces an error when trying to unpack
+        args = []  # This allows for unpacking
 
-    x_values = [0] * len(t_values)
+    x_values = [0] * len(t_values)  # Create a list of solution x values
     x_values[0] = x_0
     for i in range(len(t_values)-1):
         x_values[i+1] = solve_to(t_values[i], t_values[i + 1], x_values[i], deltaT_max, method, ode, args)
@@ -180,53 +181,81 @@ def error_plot(t_values, x_0, ode, exact, args=None):
         time_rk4            - The time take for the rk4 method to reach an error specified in the function
     """
 
-    if args is None:
-        args = []
+    if args is None:  # args cannot be passed through as None because this induces an error when trying to unpack
+        args = []  # This allows for unpacking
 
-    x_value = exact(t_values[1], 0)
+    exact_value = exact(t_values[1], 0)
     step_sizes = np.logspace(-6, 0, 10)
+
+    # Set up an array for the errors of the different one-step integration methods
     error_eul = np.zeros(len(step_sizes))
     error_rk4 = np.zeros(len(step_sizes))
     error_improv = np.zeros(len(step_sizes))
     error_heun = np.zeros(len(step_sizes))
-    error_match = 1e-6
+
+    error_match = 1e-6  # The error used to find how long each method takes to reach a specific error.
+
+    # Initialise the values for the step_size for each method to reach a specific error
+    step_size_eul = 0
+    step_size_rk4 = 0
+    step_size_improv = 0
+    step_size_heun = 0
+
+    # Initialise the values for the time taken for each method to reach a specific error
     final_time_eul = 0
     final_time_rk4 = 0
     final_time_improv = 0
     final_time_heun = 0
+
     for i in range(len(step_sizes)):
-        init_time = time.perf_counter()
+        # Here time.perf_counter() is used instead of time.time() because perf_counter is more accurate and does not
+        # appear to be significantly more computationally expensive
+
+        init_time = time.perf_counter()  # Set time
         predict_eul = solve_ode(t_values, x_0, step_sizes[i], euler_step, ode, args)
-        time_eul = time.perf_counter() - init_time
+        time_eul = time.perf_counter() - init_time  # Find difference in time since the previously set time
 
-        init_time = time.perf_counter()
+        init_time = time.perf_counter()  # Set time
         predict_rk4 = solve_ode(t_values, x_0, step_sizes[i], rk4, ode, args)
-        time_rk4 = time.perf_counter() - init_time
+        time_rk4 = time.perf_counter() - init_time  # Find difference in time since the previously set time
 
-        init_time = time.perf_counter()
+        init_time = time.perf_counter()  # Set time
         predict_improv = solve_ode(t_values, x_0, step_sizes[i], improved_euler_step, ode, args)
-        time_improv = time.perf_counter() - init_time
+        time_improv = time.perf_counter() - init_time  # Find difference in time since the previously set time
 
-        init_time = time.perf_counter()
+        init_time = time.perf_counter()  # Set time
         predict_heun = solve_ode(t_values, x_0, step_sizes[i], heun_step, ode, args)
-        time_heun = time.perf_counter() - init_time
+        time_heun = time.perf_counter() - init_time  # Find difference in time since the previously set time
 
-        error_eul[i] = abs(predict_eul[-1] - x_value)
-        error_rk4[i] = abs(predict_rk4[-1] - x_value)
-        error_improv[i] = abs(predict_improv[-1] - x_value)
-        error_heun[i] = abs(predict_heun[-1] - x_value)
-        if math.isclose(error_match, error_eul[i], abs_tol=1e-5):
+        # Find errors by comparing to the exact value
+        error_eul[i] = abs(predict_eul[-1] - exact_value)
+        error_rk4[i] = abs(predict_rk4[-1] - exact_value)
+        error_improv[i] = abs(predict_improv[-1] - exact_value)
+        error_heun[i] = abs(predict_heun[-1] - exact_value)
+
+        # Check if the error from each method is close to the specific error chosen (error_match)
+        if math.isclose(error_match, error_eul[i], abs_tol=1e-6):
+            # Using math.isclose() because it is unlikely for the error to be equal to the error specified
             final_time_eul = time_eul
-        if math.isclose(error_match, error_rk4[i], abs_tol=1e-5):
+            step_size_eul = step_sizes[i]
+        if math.isclose(error_match, error_rk4[i], abs_tol=1e-6):
             final_time_rk4 = time_rk4
-        if math.isclose(error_match, error_improv[i], abs_tol=1e-5):
+            step_size_rk4 = step_sizes[i]
+        if math.isclose(error_match, error_improv[i], abs_tol=1e-6):
             final_time_improv = time_improv
-        if math.isclose(error_match, error_heun[i], abs_tol=1e-5):
+            step_size_improv = step_sizes[i]
+        if math.isclose(error_match, error_heun[i], abs_tol=1e-6):
             final_time_heun = time_heun
+            step_size_heun = step_sizes[i]
     print('Time taken by Euler Method: ', final_time_eul)
     print('Time taken by 4th Order Runge Kutta Method: ', final_time_rk4)
     print('Time taken by Improved Euler Method: ', final_time_improv)
     print('Time taken by Heun Method: ', final_time_heun)
+
+    print('Step-size for Euler Method: ', step_size_eul)
+    print('Step-size for 4th Order Runge Kutta Method: ', step_size_rk4)
+    print('Step-size for Improved Euler Method: ', step_size_improv)
+    print('Step-size for Heun Method: ', step_size_heun)
 
     # Plot the errors of euler and RK4
     plt.loglog(step_sizes, error_eul, label='Euler Method')
@@ -250,13 +279,16 @@ def plot_approx(t_values, x_values, step_size, ode, exact, args=None):
         step_size       - The step-size of the numerical methods to be executed
     """
 
-    if args is None:
-        args = []
+    if args is None:  # args cannot be passed through as None because this induces an error when trying to unpack
+        args = []  # This allows for unpacking
 
+    # Initialise the solutions of all the one-step inegration methods
     rk4_values = np.asarray(solve_ode(t_values, x_values, step_size, rk4, ode, args))
     euler_values = np.asarray(solve_ode(t_values, x_values, step_size, euler_step, ode, args))
     improved_euler_values = np.asarray(solve_ode(t_values, x_values, step_size, improved_euler_step, ode, args))
     heun_values = np.asarray(solve_ode(t_values, x_values, step_size, heun_step, ode, args))
+
+    # Find the exact solutions
     exact_values = [0]*len(rk4_values)
     for i in range(len(t_values)):
         exact_values[i] = exact(t_values[i], x_values, *args)

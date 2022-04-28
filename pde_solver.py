@@ -301,37 +301,58 @@ def pde_solver(pde, L, T, mx, mt, method, bound_cond, p_func, q_func, args):
     return solution_matrix
 
 
-def find_steady_state(solution_matrix):
-    steady_state = []
-    for i in range(len(solution_matrix)-1):
-        if np.allclose(solution_matrix[i], solution_matrix[i+1], rtol=1e-05):
-            steady_state = solution_matrix[i]
-            break
-    return steady_state
+def pde_error_plot(pde, L, T, k, mx_range, mt_range, n, bound_cond, p_func, q_func, args):
+    mx_values = np.linspace(mx_range[0], mx_range[1], n)
+    mt_values = np.linspace(mt_range[0], mt_range[1], n)
+    backward_error_mx = np.zeros(len(mx_values))
+    crank_error_mx = np.zeros(len(mx_values))
+    backward_error_mt = np.zeros(len(mt_values))
+    crank_error_mt = np.zeros(len(mt_values))
 
-
-def pde_error_plot(pde, L, T, mx, mt, bound_cond, p_func, q_func, args):
-    # Create exact solution matrix
-    exact_solution = np.zeros((mt, mx+1))
-    for i in range(mt):
+    # Vary mx values
+    for i in range(len(mx_values)):
+        print(i)
+        mx = int(mx_values[i])
+        mt = 2000
+        exact_solution = np.zeros(mx + 1)
         for j in range(mx+1):
-            exact_solution[i, j] = u_exact(x[j], t[i], k, L)
+            exact_solution[j] = u_exact(j*L/mx, T, k, L)
 
-    # Create solution a matrix for each method
-    forward_sol = pde_solver(pde, L, T, mx, mt, forward_euler, bound_cond, p_func, q_func, args)
-    backward_sol = pde_solver(pde, L, T, mx, mt, backward_euler, bound_cond, p_func, q_func, args)
-    crank_sol = pde_solver(pde, L, T, mx, mt, crank_nicholson, bound_cond, p_func, q_func, args)
+        # Create solution a matrix for each method
+        backward_sol = pde_solver(pde, L, T, mx, mt, backward_euler, bound_cond, p_func, q_func, args)
+        crank_sol = pde_solver(pde, L, T, mx, mt, crank_nicholson, bound_cond, p_func, q_func, args)
+        backward_error_mx[i] = abs(np.mean(exact_solution - backward_sol[-1]))
+        crank_error_mx[i] = abs(np.mean(exact_solution - crank_sol[-1]))
 
-    # Calculate the error at each time step for each method
-    forward_error = (np.square(forward_sol - exact_solution)).mean(axis=1)
-    backward_error = (np.square(backward_sol - exact_solution)).mean(axis=1)
-    crank_error = (np.square(crank_sol - exact_solution)).mean(axis=1)
-
-    plt.plot(forward_error, label='Forward Euler')
-    plt.plot(backward_error, label='Backward Euler')
-    plt.plot(crank_error, label='Crank')
+    plt.plot(mx_values, backward_error_mx, label='Backward Euler')
+    plt.plot(mx_values, crank_error_mx, label='Crank Nicholson')
     plt.legend()
-    plt.xlabel('Time', fontsize=14)
+    plt.xlabel('Number of space data points', fontsize=14)
+    plt.ylabel('Mean Square Error', fontsize=14)
+    plt.yticks(fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.show()
+
+    # Vary mt values
+    for i in range(len(mt_values)):
+        print(i)
+        mt = int(mt_values[i])
+        mx = 100
+        exact_solution = np.zeros(mx + 1)
+        for j in range(mx+1):
+            exact_solution[j] = u_exact(j*L/mx, T, k, L)
+
+        # Create solution a matrix for each method
+
+        backward_sol = pde_solver(pde, L, T, mx, mt, backward_euler, bound_cond, p_func, q_func, args)
+        crank_sol = pde_solver(pde, L, T, mx, mt, crank_nicholson, bound_cond, p_func, q_func, args)
+        backward_error_mt[i] = abs(np.mean(exact_solution - backward_sol[-1]))
+        crank_error_mt[i] = abs(np.mean(exact_solution - crank_sol[-1]))
+
+    plt.plot(mt_values, backward_error_mt, label='Backward Euler')
+    plt.plot(mt_values, crank_error_mt, label='Crank Nicholson')
+    plt.legend()
+    plt.xlabel('Number of time data points', fontsize=14)
     plt.ylabel('Mean Square Error', fontsize=14)
     plt.yticks(fontsize=12)
     plt.xticks(fontsize=12)
@@ -354,32 +375,25 @@ if __name__ == '__main__':
     boundary_cond3 = 'neumann'
     boundary_cond4 = 'periodic'
 
-    # Plot the solved steady state from the pde
-    forward_sol = pde_solver(u_I, L, T, mx, mt, forward_euler, boundary_cond1, p, q, np.array([k]))
-    forward_steady_state = find_steady_state(forward_sol)
+    '''# Plot the solved steady state from the pde
+    forward_sol = pde_solver(u_I, L, T, mx, mt, forward_euler, boundary_cond3, p, q, np.array([k]))
 
-    if forward_steady_state.size == 0:
-        raise ValueError("No steady state found")
-    else:
-        plt.plot(forward_steady_state, label='Forward Euler')
-        plt.xlabel('x', fontsize=14)
-        plt.ylabel('u(x,t)', fontsize=14)
-        plt.yticks(fontsize=12)
-        plt.xticks(fontsize=12)
-        plt.show()
+    plt.plot(forward_sol[-1], label='Forward Euler')
+    plt.xlabel('x', fontsize=14)
+    plt.ylabel('u(x,t)', fontsize=14)
+    plt.yticks(fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.show()
 
     # Plot the solved steady state from the alternate pde
     forward_sol_alt = pde_solver(alternate_u_I, L, T, mx, mt, forward_euler, boundary_cond1, p, q, np.array([k]))
-    forward_steady_state_alt = find_steady_state(forward_sol_alt)
-    if forward_steady_state_alt.size == 0:
-        raise ValueError("No steady state found")
-    else:
-        plt.plot(forward_steady_state_alt, label='Forward Euler')
-        plt.xlabel('x', fontsize=14)
-        plt.ylabel('u(x,t)', fontsize=14)
-        plt.yticks(fontsize=12)
-        plt.xticks(fontsize=12)
-        plt.show()
+    plt.plot(forward_sol_alt[-1], label='Forward Euler')
+    plt.xlabel('x', fontsize=14)
+    plt.ylabel('u(x,t)', fontsize=14)
+    plt.yticks(fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.show()'''
 
     # Plot the error of each method
-    pde_error_plot(u_I, L, T, mx, mt, boundary_cond1, p, q, np.array([k]))
+    pde_error_plot(u_I, L, T, k, [10, 100], [100, 10000], 30, boundary_cond1, p, q, np.array([k]))
+

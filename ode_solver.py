@@ -367,5 +367,3 @@ if __name__ == '__main__':
     # Euler's method.
     times1 = np.linspace(0, 20, num=100)
     plot_approx(times1, np.array([3, 4]), 0.1, ode_second_order, exact_second_order)
-
-

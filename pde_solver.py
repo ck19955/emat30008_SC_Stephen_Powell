@@ -48,7 +48,8 @@ def forward_euler(pde, final_space_value, lmbda, num_of_x, num_of_t, bound_cond,
 
     # Check boundary conditions
     if bound_cond == 'dirichlet' or bound_cond == 'vary_p' or bound_cond == 'vary_q':
-        A = np.diag([1-2*lmbda] * (num_of_x - 1)) + np.diag([lmbda] * (num_of_x - 2), -1) + np.diag([lmbda] * (num_of_x - 2), 1)
+        A = np.diag([1-2*lmbda] * (num_of_x - 1)) + np.diag([lmbda] * (num_of_x - 2), -1) \
+                                                            + np.diag([lmbda] * (num_of_x - 2), 1)
         additive_vector = np.zeros(num_of_x - 1)
 
     elif bound_cond == 'neumann':
@@ -59,14 +60,16 @@ def forward_euler(pde, final_space_value, lmbda, num_of_x, num_of_t, bound_cond,
         additive_vector = np.zeros(num_of_x + 1)
 
     elif bound_cond == 'periodic':
-        A = np.diag([1-2*lmbda] * num_of_x) + np.diag([lmbda] * (num_of_x - 1), -1) + np.diag([lmbda] * (num_of_x - 1), 1)
+        A = np.diag([1-2*lmbda] * num_of_x) + np.diag([lmbda] * (num_of_x - 1), -1) \
+            + np.diag([lmbda] * (num_of_x - 1), 1)
         A[0, -1] = lmbda
         A[-1, 0] = lmbda
         solution_matrix = np.zeros((num_of_t, num_of_x))
         solution_matrix[0] = u_vect[:-1]
 
     elif bound_cond == 'homogenous':
-        A = np.diag([1-2*lmbda] * (num_of_x - 1)) + np.diag([lmbda] * (num_of_x - 2), -1) + np.diag([lmbda] * (num_of_x - 2), 1)
+        A = np.diag([1-2*lmbda] * (num_of_x - 1)) + np.diag([lmbda] * (num_of_x - 2), -1) \
+            + np.diag([lmbda] * (num_of_x - 2), 1)
 
     # Iterate over time values
     for i in range(0, num_of_t - 1):
@@ -130,7 +133,8 @@ def backward_euler(pde, final_space_value, lmbda, num_of_x, num_of_t, bound_cond
 
     # Check boundary conditions
     if bound_cond == 'dirichlet':
-        A = np.diag([1+2*lmbda] * (num_of_x - 1)) + np.diag([-lmbda] * (num_of_x - 2), -1) + np.diag([-lmbda] * (num_of_x - 2), 1)
+        A = np.diag([1+2*lmbda] * (num_of_x - 1)) + np.diag([-lmbda] * (num_of_x - 2), -1) \
+            + np.diag([-lmbda] * (num_of_x - 2), 1)
         additive_vector = np.zeros(num_of_x - 1)
 
     elif bound_cond == 'neumann':
@@ -141,14 +145,16 @@ def backward_euler(pde, final_space_value, lmbda, num_of_x, num_of_t, bound_cond
         additive_vector = np.zeros(num_of_x + 1)
 
     elif bound_cond == 'periodic':
-        A = np.diag([1+2*lmbda] * num_of_x) + np.diag([-lmbda] * (num_of_x - 1), -1) + np.diag([-lmbda] * (num_of_x - 1), 1)
+        A = np.diag([1+2*lmbda] * num_of_x) + np.diag([-lmbda] * (num_of_x - 1), -1) \
+            + np.diag([-lmbda] * (num_of_x - 1), 1)
         A[0, -1] = -lmbda
         A[-1, 0] = -lmbda
         solution_matrix = np.zeros((num_of_t, num_of_x))
         solution_matrix[0] = u_vect[:-1]
 
     else:
-        A = np.diag([1+2*lmbda] * (num_of_x - 1)) + np.diag([-lmbda] * (num_of_x - 2), -1) + np.diag([-lmbda] * (num_of_x - 2), 1)
+        A = np.diag([1+2*lmbda] * (num_of_x - 1)) + np.diag([-lmbda] * (num_of_x - 2), -1) \
+            + np.diag([-lmbda] * (num_of_x - 2), 1)
 
     # Iterate over time values
     for i in range(0, num_of_t - 1):
@@ -209,13 +215,17 @@ def crank_nicholson(pde, final_space_value, lmbda, num_of_x, num_of_t, bound_con
 
     # Check boundary conditions
     if bound_cond == 'dirichlet':
-        A = np.diag([1+lmbda] * (num_of_x - 1)) + np.diag([-lmbda / 2] * (num_of_x - 2), -1) + np.diag([-lmbda / 2] * (num_of_x - 2), 1)
-        B = np.diag([1-lmbda] * (num_of_x - 1)) + np.diag([lmbda / 2] * (num_of_x - 2), -1) + np.diag([lmbda / 2] * (num_of_x - 2), 1)
+        A = np.diag([1+lmbda] * (num_of_x - 1)) + np.diag([-lmbda / 2] * (num_of_x - 2), -1) \
+            + np.diag([-lmbda / 2] * (num_of_x - 2), 1)
+        B = np.diag([1-lmbda] * (num_of_x - 1)) + np.diag([lmbda / 2] * (num_of_x - 2), -1) \
+            + np.diag([lmbda / 2] * (num_of_x - 2), 1)
         additive_vector = np.zeros(num_of_x - 1)
 
     elif bound_cond == 'neumann':
-        A = np.diag([1+lmbda] * (num_of_x + 1)) + np.diag([-lmbda / 2] * num_of_x, -1) + np.diag([-lmbda / 2] * num_of_x, 1)
-        B = np.diag([1-lmbda] * (num_of_x + 1)) + np.diag([lmbda / 2] * num_of_x, -1) + np.diag([lmbda / 2] * num_of_x, 1)
+        A = np.diag([1+lmbda] * (num_of_x + 1)) + np.diag([-lmbda / 2] * num_of_x, -1) \
+            + np.diag([-lmbda / 2] * num_of_x, 1)
+        B = np.diag([1-lmbda] * (num_of_x + 1)) + np.diag([lmbda / 2] * num_of_x, -1) \
+            + np.diag([lmbda / 2] * num_of_x, 1)
         A[0, 1] = 2*A[0, 1]
         A[-1, -2] = 2*A[-1, -2]
         B[0, 1] = 2*B[0, 1]
@@ -224,8 +234,10 @@ def crank_nicholson(pde, final_space_value, lmbda, num_of_x, num_of_t, bound_con
         additive_vector = np.zeros(num_of_x + 1)
 
     elif bound_cond == 'periodic':
-        A = np.diag([1+lmbda] * num_of_x) + np.diag([-lmbda / 2] * (num_of_x - 1), -1) + np.diag([-lmbda / 2] * (num_of_x - 1), 1)
-        B = np.diag([1-lmbda] * num_of_x) + np.diag([lmbda / 2] * (num_of_x - 1), -1) + np.diag([lmbda / 2] * (num_of_x - 1), 1)
+        A = np.diag([1+lmbda] * num_of_x) + np.diag([-lmbda / 2] * (num_of_x - 1), -1) \
+            + np.diag([-lmbda / 2] * (num_of_x - 1), 1)
+        B = np.diag([1-lmbda] * num_of_x) + np.diag([lmbda / 2] * (num_of_x - 1), -1) \
+            + np.diag([lmbda / 2] * (num_of_x - 1), 1)
         A[0, -1] = -lmbda/2
         A[-1, 0] = -lmbda/2
         B[0, -1] = lmbda/2
@@ -234,8 +246,10 @@ def crank_nicholson(pde, final_space_value, lmbda, num_of_x, num_of_t, bound_con
         solution_matrix[0] = u_vect[:-1]
 
     else:
-        A = np.diag([1+lmbda] * (num_of_x - 1)) + np.diag([-lmbda / 2] * (num_of_x - 2), -1) + np.diag([-lmbda / 2] * (num_of_x - 2), 1)
-        B = np.diag([1-lmbda] * (num_of_x - 1)) + np.diag([lmbda / 2] * (num_of_x - 2), -1) + np.diag([lmbda / 2] * (num_of_x - 2), 1)
+        A = np.diag([1+lmbda] * (num_of_x - 1)) + np.diag([-lmbda / 2] * (num_of_x - 2), -1) \
+            + np.diag([-lmbda / 2] * (num_of_x - 2), 1)
+        B = np.diag([1-lmbda] * (num_of_x - 1)) + np.diag([lmbda / 2] * (num_of_x - 2), -1) \
+            + np.diag([lmbda / 2] * (num_of_x - 2), 1)
 
     # Iterate over time values
     for i in range(0, num_of_t - 1):
@@ -303,8 +317,8 @@ def pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t, met
     return solution_matrix
 
 
-def pde_error_plot(pde, final_space_value, final_time_value, thermal_const, mx_range, mt_range, number_of_runs, bound_cond, p_func,
-                   q_func, args):
+def pde_error_plot(pde, final_space_value, final_time_value, thermal_const, mx_range, mt_range, number_of_runs,
+                   bound_cond, p_func, q_func, args):
     """
     Plots the error of the different pde solvers (not including forward euler) as the number of data points vary
 
@@ -351,11 +365,14 @@ def pde_error_plot(pde, final_space_value, final_time_value, thermal_const, mx_r
         # Find the exact solution
         exact_solution = np.zeros(x_data + 1)
         for j in range(x_data+1):
-            exact_solution[j] = u_exact(j * final_space_value / x_data, final_time_value, thermal_const, final_space_value)
+            exact_solution[j] = u_exact(j * final_space_value / x_data, final_time_value, thermal_const,
+                                        final_space_value)
 
         # Create solution a matrix for each method
-        backward_sol = pde_solver(pde, final_space_value, final_time_value, x_data, t_data, backward_euler, bound_cond, p_func, q_func, args)
-        crank_sol = pde_solver(pde, final_space_value, final_time_value, x_data, t_data, crank_nicholson, bound_cond, p_func, q_func, args)
+        backward_sol = pde_solver(pde, final_space_value, final_time_value, x_data, t_data, backward_euler, bound_cond,
+                                  p_func, q_func, args)
+        crank_sol = pde_solver(pde, final_space_value, final_time_value, x_data, t_data, crank_nicholson, bound_cond,
+                               p_func, q_func, args)
 
         # Calculate the mean squared error of the methods
         backward_error_mx[i] = abs(np.mean(exact_solution - backward_sol[-1]))
@@ -378,11 +395,14 @@ def pde_error_plot(pde, final_space_value, final_time_value, thermal_const, mx_r
         # Find the exact solution
         exact_solution = np.zeros(x_data + 1)
         for j in range(x_data+1):
-            exact_solution[j] = u_exact(j * final_space_value / x_data, final_time_value, thermal_const, final_space_value)
+            exact_solution[j] = u_exact(j * final_space_value / x_data, final_time_value, thermal_const,
+                                        final_space_value)
 
         # Create solution a matrix for each method
-        backward_sol = pde_solver(pde, final_space_value, final_time_value, x_data, t_data, backward_euler, bound_cond, p_func, q_func, args)
-        crank_sol = pde_solver(pde, final_space_value, final_time_value, x_data, t_data, crank_nicholson, bound_cond, p_func, q_func, args)
+        backward_sol = pde_solver(pde, final_space_value, final_time_value, x_data, t_data, backward_euler, bound_cond,
+                                  p_func, q_func, args)
+        crank_sol = pde_solver(pde, final_space_value, final_time_value, x_data, t_data, crank_nicholson, bound_cond,
+                               p_func, q_func, args)
 
         # Calculate the mean squared error of the methods
         backward_error_mt[i] = abs(np.mean(exact_solution - backward_sol[-1]))

@@ -167,8 +167,8 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
         p0 = p1
         if orbit:
             # If shooting is required
-            init_vals = shooting(ode, np.append(u1, p1), pseudo_arclength_conditions, [vary_par_index, predict_ui, state_secant,
-                                                          predict_pi, param_secant], orbit, args)
+            init_vals = shooting(ode, np.append(u1, p1), pseudo_arclength_conditions,
+                                 [vary_par_index, predict_ui, state_secant, predict_pi, param_secant], orbit, args)
         else:
             # If shooting is not required, use fsolve()
             init_vals = fsolve(lambda x: pseudo_arclength_conditions(ode, x,
@@ -268,13 +268,16 @@ def pde_continuation(pde, step_size, vary_par_index, vary_range, final_space_val
     for i in range(len(param_values)):
         # 'vary_p' and 'vary_q' refer to the boundary conditions being varied
         if boundary_cond == 'vary_p':
-            solution_matrix = pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t, method, boundary_cond, lambda x: param_values[i], q_func, args)
+            solution_matrix = pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t,
+                                         method, boundary_cond, lambda x: param_values[i], q_func, args)
         elif boundary_cond == 'vary_q':
-            solution_matrix = pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t, method, boundary_cond, p_func, lambda x: param_values[i], args)
+            solution_matrix = pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t,
+                                         method, boundary_cond, p_func, lambda x: param_values[i], args)
         else:
             # Vary the heat diffusion constant
             args[vary_par_index] = param_values[i]
-            solution_matrix = pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t, method, boundary_cond, p_func, q_func, args)
+            solution_matrix = pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t,
+                                         method, boundary_cond, p_func, q_func, args)
         list_of_solutions[i] = solution_matrix[-1]
 
     # If the thermal diffusion constant is being varied, plot normally
@@ -283,9 +286,10 @@ def pde_continuation(pde, step_size, vary_par_index, vary_range, final_space_val
         plt.show()
     else:
         plt.plot(list_of_solutions)
-        plt.show()
-        solution_matrix = pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t, method, boundary_cond, p_func, q_func, args)
-        plt.plot(solution_matrix)
+        plt.ylabel("u", fontsize=14)
+        plt.xlabel("Parameter Value", fontsize=14)
+        plt.yticks(fontsize=12)
+        plt.xticks(fontsize=12)
         plt.show()
     return list_of_solutions, param_values
 
@@ -293,15 +297,15 @@ def pde_continuation(pde, step_size, vary_par_index, vary_range, final_space_val
 if __name__ == '__main__':
 
     # Plot the bifurcation diagrams for the cubic equation
-    #natural_parameter(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
-    #pseudo_arclength(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
+    natural_parameter(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
+    pseudo_arclength(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
 
     # Plot the bifurcation diagrams for the hopf bifurcation diagram
-    #natural_parameter(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, 0], True, np.array([0], dtype=float))
-    #pseudo_arclength(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, 0], True, np.array([0], dtype=float))
+    natural_parameter(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, 0], True, np.array([0], dtype=float))
+    pseudo_arclength(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, 0], True, np.array([0], dtype=float))
 
     # Plot the bifurcation diagrams for the modified hopf bifurcation diagram
-    #natural_parameter(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
+    natural_parameter(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
     pseudo_arclength(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
 
     # Plot the solutions for varying the boundary condition

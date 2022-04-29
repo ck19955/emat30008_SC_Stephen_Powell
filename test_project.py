@@ -66,16 +66,6 @@ def test_shooting():
     assert np.allclose(initial_orbit_values[-1], shooting_orbit_values[-1], rtol=1)
 
 
-# Test natural parameter
-def test_natural_parameter():
-    pass
-
-
-# Test pseudo arclength
-def test_pseudo_arclength():
-    pass
-
-
 # Test pde forward euler
 def test_forward_euler():
     L = 1
@@ -116,15 +106,5 @@ def test_crank_nicholson():
     centre_solution = solution_matrix[int(mt/2), int(mx/2)]
     exact_solution = u_exact(L/2, T/2, k, L)
     assert np.isclose(centre_solution, exact_solution, rtol=1)
-
-
-# Test steady state
-def test_steady_states():
-    pass
-
-
-# Test pde continuation
-def test_pde_continuation():
-    pass
 
 

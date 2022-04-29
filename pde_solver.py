@@ -1,7 +1,6 @@
 import numpy as np
-from math import pi
 import matplotlib.pyplot as plt
-from function_examples import *
+from function_examples import u_I, u_exact, alternate_u_I, p, q
 
 
 def forward_euler(pde, final_space_value, lmbda, num_of_x, num_of_t, bound_cond, p_func, q_func):
@@ -419,6 +418,7 @@ def pde_solution_plot(solution, exact, label):
     plt.ylabel('u(x,t)', fontsize=14)
     plt.yticks(fontsize=12)
     plt.xticks(fontsize=12)
+    plt.legend()
     plt.show()
 
 
@@ -449,8 +449,8 @@ if __name__ == '__main__':
 
     # Plot the solved steady state from the alternate pde
     forward_sol_alt = pde_solver(alternate_u_I, L, T, mx, mt, forward_euler, boundary_cond1, p, q, np.array([k]))
-    print('The pde solved using the original initial condition: ', forward_sol)
-    print('The pde solved using the initial condition as the square of the original: ', forward_sol_alt)
+    print('The pde solved using the original initial condition: ', forward_sol[-1])
+    print('The pde solved using the initial condition as the square of the original: ', forward_sol_alt[-1])
 
     # Plot the error of each method
     pde_error_plot(u_I, L, T, k, [10, 100], [100, 10000], 30, boundary_cond1, p, q, np.array([k]))

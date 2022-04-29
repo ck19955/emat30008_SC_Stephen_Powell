@@ -5,7 +5,7 @@ from ode_solver import rk4, solve_ode
 from scipy.signal import find_peaks
 from scipy.integrate import solve_ivp
 from scipy.optimize import fsolve
-from function_examples import pred_prey, hopf_bif
+from function_examples import pred_prey
 
 
 def isolate_orbit(ode_data, time_data):

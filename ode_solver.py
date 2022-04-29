@@ -3,7 +3,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from function_examples import *
+from function_examples import ode_first_order, ode_second_order, exact_second_order, exponential
 
 
 def euler_step(t_n, x_n, step_size, ode, args):

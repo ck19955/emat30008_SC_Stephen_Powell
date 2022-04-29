@@ -123,28 +123,27 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
     """
     vary_count = int(abs((np.diff(vary_range))) / step_size)  # Number of different variable values
     vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
-    args[vary_par_index] = vary_values[0]
+    args[vary_par_index] = vary_values[1]
 
     if orbit:
         # Find first initial solution
         times = np.linspace(0, 500, num=2000)  # Range of t_values to find orbit
         rk4_values = np.asarray(solve_ode(times, initial_guess, 0.1, rk4, ode, args))
 
-
         # First known solution
         u0 = np.array(isolate_orbit(rk4_values, times))
-        p0 = vary_values[0]
+        p0 = vary_values[1]
 
         # Find second initial solution
-        args[vary_par_index] = vary_values[1]
+        args[vary_par_index] = vary_values[2]
         rk4_values = np.asarray(solve_ode(times, u0[:-1], 0.1, rk4, ode, args))
 
         # Second known solution
         u1 = np.array(isolate_orbit(rk4_values, times))
-        p1 = vary_values[1]
+        p1 = vary_values[2]
     else:
         # If shooting is not required then find the two initial solutions using fsolve()
-        p0, p1 = vary_values[0], vary_values[1]
+        p0, p1 = vary_values[1], vary_values[2]
         u0 = np.array(fsolve(lambda x: ode(0, x, p0), np.array([initial_guess])))
         u1 = np.array(fsolve(lambda x: ode(0, x, p1), np.array([initial_guess])))
 
@@ -187,7 +186,7 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
         # However, in this case it is difficult to create an empty array of the correct size because pseudo-arclength
         # iterates in an non-linear manner.
         list_of_solutions.append(init_vals)
-
+        print(init_vals)
         # Check if the new parameter remains in the range
         if vary_range[1] < vary_range[0]:
             statement = vary_range[0] > p1 > vary_range[1]
@@ -294,15 +293,15 @@ def pde_continuation(pde, step_size, vary_par_index, vary_range, final_space_val
 if __name__ == '__main__':
 
     # Plot the bifurcation diagrams for the cubic equation
-    natural_parameter(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
-    pseudo_arclength(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
+    #natural_parameter(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
+    #pseudo_arclength(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
 
     # Plot the bifurcation diagrams for the hopf bifurcation diagram
-    natural_parameter(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, 0], True, np.array([0], dtype=float))
-    pseudo_arclength(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, 0], True, np.array([0], dtype=float))
+    #natural_parameter(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, 0], True, np.array([0], dtype=float))
+    #pseudo_arclength(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, 0], True, np.array([0], dtype=float))
 
     # Plot the bifurcation diagrams for the modified hopf bifurcation diagram
-    natural_parameter(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
+    #natural_parameter(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
     pseudo_arclength(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
 
     # Plot the solutions for varying the boundary condition

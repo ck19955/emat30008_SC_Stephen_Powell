@@ -37,8 +37,7 @@ def hopf_bif(t, u_values, beta):
     return u_array
 
 
-def exact_hopf_bif(t, u_values, beta):
-    theta = -1
+def exact_hopf_bif(t, u_values, beta, theta):
     u_array = np.array([(beta**0.5)*math.cos(t + theta), (beta**0.5)*math.sin(t + theta)])
     return u_array
 

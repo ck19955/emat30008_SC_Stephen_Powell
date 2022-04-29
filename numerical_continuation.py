@@ -4,22 +4,46 @@ from ode_solver import rk4, solve_ode
 from function_examples import *
 from numerical_shooting import isolate_orbit, shooting, shooting_conditions, pseudo_arclength_conditions
 from scipy.optimize import fsolve
-from pde_solver import pde_solver, forward_euler, backward_euler, crank_nicholson, find_steady_state
+from pde_solver import pde_solver, forward_euler, backward_euler, crank_nicholson
 
 
 def natural_parameter(ode, initial_guess, step_size, vary_par_index, vary_range, orbit, args):
     """
-    :param ode: Example ODE
-    :param initial_guess: The initial guess for isolating an orbit
-    :param vary_par_index: The index of the parameter to vary found in args
-    :param vary_range: The range of values to vary over
-    :param args: The arguments for tbe constants of the ODE
-    :return: A list of solutions
+    Natural parameter continuation finds solutions or initial values of orbits. The solutions are found for parameter
+    values between the range specified.
+
+    Parameters:
+    ----------
+        ode : function
+            ODE to find solution for
+        initial_guess : array
+            Initial guess for the solution
+        step_size : float
+            The step size to vary between parameter values
+        vary_par_index : integer
+            The index of the parameter to vary found in args
+        vary_range : tuple
+            The range of parameter values to vary over
+        orbit : Boolean
+            Decides whether an orbit is being found or not
+        args : numpy array
+            The parameters of the ODE
+
+
+    Returns:
+    ----------
+        list_of_solutions : list
+            List of solutions of the ODE for each parameter value
+        parameter_values : list
+            List of parameter values for each solution found
     """
 
     vary_count = int(abs((np.diff(vary_range))) / step_size)  # Number of different variable values
-    vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
-    args[vary_par_index] = vary_values[1]
+    parameter_values = np.linspace(vary_range[0], vary_range[1], vary_count)
+    # List of parameter values to find solutions for
+
+    # Set the new value to the desired parameter to vary
+    args[vary_par_index] = parameter_values[0]
 
     if orbit:
         # Find the initial solution using isolate_orbit()
@@ -29,109 +53,125 @@ def natural_parameter(ode, initial_guess, step_size, vary_par_index, vary_range,
 
     else:
         # If shooting is not required
-        # Find initial solution
+        # Find the initial solution using fsolve()
         args[vary_par_index] = vary_range[0]
         init_solution = fsolve(lambda x: ode(0, x, args), np.array([initial_guess]))
 
-    list_of_solutions = [0] * len(vary_values)
+    # Set up an list of zeros
+    list_of_solutions = [0] * len(parameter_values)
     list_of_solutions[0] = init_solution
 
-    for i in range(1, len(vary_values)):
-        args[vary_par_index] = vary_values[i]
+    for i in range(1, len(parameter_values)):
+        # Set the new value to the desired parameter to vary
+        args[vary_par_index] = parameter_values[i]
         if orbit:
+            # Find the orbit using the previous solution
             init_solution = shooting(ode, init_solution, shooting_conditions, [], orbit, args)
         else:
+            # If shooting is not required find the initial solution using fsolve()
             init_solution = fsolve(lambda x: ode(0, x, args), np.array([init_solution]))
         list_of_solutions[i] = init_solution
 
+    # If list_of_solutions has only one dimension then it is a first order ODE where solutions have been found
     if len(list_of_solutions[0]) == 1:
-        plt.plot(vary_values, list_of_solutions)
+        plt.plot(parameter_values, list_of_solutions)
     else:
         t_remove = 0
         if orbit:
-            t_remove = 1
+            t_remove = 1  # If orbits are being found then the period needs to be removed for plotting
         for i in range(len(list_of_solutions[0]) - t_remove):
-            x_values = [item[i] for item in list_of_solutions]
-            plt.plot(vary_values, x_values)
+            x_values = [item[i] for item in list_of_solutions]  # Code is generalised for different dimensions
+            plt.plot(parameter_values, x_values)
     plt.ylabel("u", fontsize=14)
     plt.xlabel("Parameter Value", fontsize=14)
     plt.yticks(fontsize=12)
     plt.xticks(fontsize=12)
     plt.show()
-    plt.show()
 
-    return list_of_solutions, vary_values
+    return list_of_solutions, parameter_values
 
 
 def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, orbit, args):
     """
-    Executes a single step of the forward euler method for given value, t_n
+    Pseudo-arclength continuation finds solutions or initial values of orbits. The solutions are found for parameter
+    values between the range specified.
 
     Parameters:
     ----------
         ode : function
-            The ODE for which the euler step predicts
-        initial_guess : numpy array
-            The initial guess to find an orbit
+            ODE to find solution for
+        initial_guess : array
+            Initial guess for the solution
+        step_size : float
+            The step size to vary between parameter values
         vary_par_index : integer
-            The index of the parameter from args
-        vary_range : list
-            The lower and upper limit for the values the parameter can take
-        args : list
+            The index of the parameter to vary found in args
+        vary_range : tuple
+            The range of parameter values to vary over
+        orbit : Boolean
+            Decides whether an orbit is being found or not
+        args : numpy array
             The parameters of the ODE
+
 
     Returns:
     ----------
-        x : numpy array
-            The new value of the dependant variable after an euler step
+     u_values : list
+         List of solutions of the ODE for each parameter value
+     param_values : list
+         List of parameter values for each solution found
     """
-
     vary_count = int(abs((np.diff(vary_range))) / step_size)  # Number of different variable values
     vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
-    args[vary_par_index] = vary_values[1]
+    args[vary_par_index] = vary_values[0]
 
     if orbit:
         # Find first initial solution
         times = np.linspace(0, 500, num=2000)  # Range of t_values to find orbit
         rk4_values = np.asarray(solve_ode(times, initial_guess, 0.1, rk4, ode, args))
 
-        # plt.plot(rk4_values)
-        # plt.show()
 
         # First known solution
         u0 = np.array(isolate_orbit(rk4_values, times))
-        p0 = vary_values[1]
+        p0 = vary_values[0]
 
         # Find second initial solution
-        args[vary_par_index] = vary_values[2]
+        args[vary_par_index] = vary_values[1]
         rk4_values = np.asarray(solve_ode(times, u0[:-1], 0.1, rk4, ode, args))
 
         # Second known solution
         u1 = np.array(isolate_orbit(rk4_values, times))
-        p1 = vary_values[2]
+        p1 = vary_values[1]
     else:
-        p0, p1 = vary_values[1], vary_values[2]
+        # If shooting is not required then find the two initial solutions using fsolve()
+        p0, p1 = vary_values[0], vary_values[1]
         u0 = np.array(fsolve(lambda x: ode(0, x, p0), np.array([initial_guess])))
         u1 = np.array(fsolve(lambda x: ode(0, x, p1), np.array([initial_guess])))
+
+    # Calculate the different parts required for the pseudo-arclength equation
     state_secant = u1 - u0
     predict_ui = u1 + state_secant
     param_secant = p1 - p0
     predict_pi = p1 + param_secant
     list_of_solutions = [np.append(u0, p0), np.append(u1, p1)]
 
+    # Depending on whether the parameter values starts off smaller or larger than the final parameter value, the
+    # current parameter value must be between the upper and lower limit.
     if vary_range[1] < vary_range[0]:
-        statement = p1 > vary_range[1]
-
+        statement = vary_range[0] > p1 > vary_range[1]
     else:
-        statement = p1 < vary_range[1]
+        statement = vary_range[0] < p1 < vary_range[1]
 
     while statement:
+        # Set the new initial solution and parameter values
         u0 = u1
         p0 = p1
         if orbit:
+            # If shooting is required
             init_vals = shooting(ode, np.append(u1, p1), pseudo_arclength_conditions, [vary_par_index, predict_ui, state_secant,
                                                           predict_pi, param_secant], orbit, args)
         else:
+            # If shooting is not required, use fsolve()
             init_vals = fsolve(lambda x: pseudo_arclength_conditions(ode, x,
                                                              [vary_par_index, predict_ui, state_secant, predict_pi,
                                                               param_secant], orbit, args=args), np.append(u1, p1))
@@ -142,225 +182,128 @@ def pseudo_arclength(ode, initial_guess, step_size, vary_par_index, vary_range, 
         p1 = init_vals[-1]
         param_secant = p1 - p0
         predict_pi = p1 + param_secant
+
+        # Use append to the list of solutions. Usually append is bad due to the danger of inefficiently using memory.
+        # However, in this case it is difficult to create an empty array of the correct size because pseudo-arclength
+        # iterates in an non-linear manner.
         list_of_solutions.append(init_vals)
+
+        # Check if the new parameter remains in the range
         if vary_range[1] < vary_range[0]:
             statement = vary_range[0] > p1 > vary_range[1]
         else:
             statement = vary_range[0] < p1 < vary_range[1]
+
+    # Extract the list of initial values and parameter values from the list of solutions
     u_values = [item[:-1] for item in list_of_solutions]
     param_values = [item[-1] for item in list_of_solutions]
 
+    # If the list of initial values is one dimensional then a first order ODE has been solved without the need of
+    # finding orbits. This can be plotted without any more coding.
     if len(u_values[0]) == 1:
         plt.plot(param_values, u_values)
     else:
         t_remove = 0
         if orbit:
-            t_remove = 1
+            t_remove = 1  # If orbits have been found, then the period of the orbits should be removed when plotting
         for i in range(len(u_values[0]) - t_remove):
-            x_values = [item[i] for item in u_values]
+            x_values = [item[i] for item in u_values]  # Code is generalised for different dimensions
             plt.plot(param_values, x_values)
     plt.ylabel("u", fontsize=14)
     plt.xlabel("Parameter Value", fontsize=14)
     plt.yticks(fontsize=12)
     plt.xticks(fontsize=12)
     plt.show()
-    plt.show()
 
     return u_values, param_values
 
 
-def pde_continuation(pde, step_size, vary_par_index, vary_range, L, T, mx, mt, method,
-                     boundary_cond, p_func, q_func, args):
+def pde_continuation(pde, step_size, vary_par_index, vary_range, final_space_value, final_time_value, num_of_x,
+                     num_of_t, method, boundary_cond, p_func, q_func, args):
     """
-    :param q_func:
-    :param p_func:
-    :param boundary_cond:
-    :param L:
-    :param T:
-    :param method:
-    :param pde: Example ODE
-    :param step_size: The initial guess for isolating an orbit
-    :param vary_par_index: The index of the parameter to vary found in args
-    :param vary_range: The range of values to vary over
-    :param args: The arguments for tbe constants of the ODE
-    :return: A list of solutions
+    PDE continuation finds the steady states of a PDE for varying parameter values
+
+    Parameters:
+    ----------
+        pde : function
+            PDE to find solution for
+        step_size : float
+            The step size to vary between parameter values
+        vary_par_index : integer
+            The index of the parameter to vary found in args
+        vary_range : tuple
+            The range of parameter values to vary over
+        final_space_value : integer
+            The final space value to consider for the matrix of solutions
+        final_time_value : integer
+            The final time value to consider for the matrix of solutions
+        num_of_x : integer
+            The number of data points in space
+        num_of_t : integer
+            The number of data points in time
+        method : function
+            The pde discretisation used to solve the PDE
+        boundary_cond : string
+            The type of boundary condition
+        p_func : function
+            Function of the left boundary condition
+        q_func : function
+            Function of the right boundary con
+        args : numpy array
+            The parameters of the PDE
+
+
+    Returns:
+    ----------
+     list_of_solutions : list
+         List of solutions of the PDE for each parameter value
+     param_values : list
+         List of parameter values for each solution found
     """
 
     vary_count = int((np.diff(vary_range)) / step_size)  # Number of different variable values
-    vary_values = np.linspace(vary_range[0], vary_range[1], vary_count)
-    list_of_solutions = [0] * len(vary_values)
-    for i in range(len(vary_values)):
+
+    # Set up lists for solutions
+    param_values = np.linspace(vary_range[0], vary_range[1], vary_count)
+    list_of_solutions = [0] * len(param_values)
+    for i in range(len(param_values)):
+        # 'vary_p' and 'vary_q' refer to the boundary conditions being varied
         if boundary_cond == 'vary_p':
-            solution_matrix = pde_solver(pde, L, T, mx, mt, method, boundary_cond, lambda x: vary_values[i], q_func, args)
+            solution_matrix = pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t, method, boundary_cond, lambda x: param_values[i], q_func, args)
         elif boundary_cond == 'vary_q':
-            solution_matrix = pde_solver(pde, L, T, mx, mt, method, boundary_cond, p_func, lambda x: vary_values[i], args)
+            solution_matrix = pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t, method, boundary_cond, p_func, lambda x: param_values[i], args)
         else:
-            args[vary_par_index] = vary_values[i]
-            solution_matrix = pde_solver(pde, L, T, mx, mt, method, boundary_cond, p_func, q_func, args)
-        list_of_solutions[i] = find_steady_state(solution_matrix)
+            # Vary the heat diffusion constant
+            args[vary_par_index] = param_values[i]
+            solution_matrix = pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t, method, boundary_cond, p_func, q_func, args)
+        list_of_solutions[i] = solution_matrix[-1]
+
+    # If the thermal diffusion constant is being varied, plot normally
     if boundary_cond != 'vary_p' and 'vary_q':
         plt.plot(list_of_solutions)
         plt.show()
     else:
         plt.plot(list_of_solutions)
         plt.show()
-        solution_matrix = pde_solver(pde, L, T, mx, mt, method, boundary_cond, p_func, q_func, args)
+        solution_matrix = pde_solver(pde, final_space_value, final_time_value, num_of_x, num_of_t, method, boundary_cond, p_func, q_func, args)
         plt.plot(solution_matrix)
         plt.show()
-    return list_of_solutions, vary_values
-
-
-def continuation(diff_eq, initial_guess, step_size, vary_par_index, vary_range, orbit, discretisation, method,
-                 boundary, L, T, mx, mt, p_func, q_func, plot, args):
-    """
-    Solves a given pde using the forward euler method
-
-    Parameters:
-    ----------
-        pde : function
-            The PDE to be solved
-        L : float
-            The length of the spatial domain
-        lmbda : float
-            Mesh fourier number
-        mx : integer
-            Number of gridpoints in space
-        mt : integer
-            Number of gridpoints in time
-        bound_cond : string
-            boundary condition type for the PDE
-        p_func : function
-            The value at u(0, t)
-        q_func : function
-            The value at u(L, t)
-
-    Returns:
-    ----------
-        solution_matrix : numpy array
-            Matrix of all data points in the space at any given time
-    """
-
-    if discretisation == 'pseudo_arclength':
-        list_param, param_values = pseudo_arclength(diff_eq, initial_guess, step_size, vary_par_index, vary_range,
-                                                    orbit, False, args)
-        if len(list_param[0]) == 1:
-            plt.plot(param_values, list_param)
-        else:
-            t_remove = 0
-            if orbit:
-                t_remove = 1
-            for i in range(len(list_param[0]) - t_remove):
-                x_values = [item[i] for item in list_param]
-                plt.plot(param_values, x_values)
-        plt.ylabel("u", fontsize=14)
-        plt.xlabel("Parameter Value", fontsize=14)
-        plt.yticks(fontsize=12)
-        plt.xticks(fontsize=12)
-        plt.show()
-        plt.show()
-
-    elif discretisation == 'natural_parameter':
-        list_param, param_values = natural_parameter(diff_eq, initial_guess, step_size, vary_par_index, vary_range,
-                                                     orbit, args)
-        if len(list_param[0]) == 1:
-            plt.plot(param_values, list_param)
-        else:
-            t_remove = 0
-            if orbit:
-                t_remove = 1
-            for i in range(len(list_param[0]) - t_remove):
-                x_values = [item[i] for item in list_param]
-                plt.plot(param_values, x_values)
-        plt.ylabel("u", fontsize=14)
-        plt.xlabel("Parameter Value", fontsize=14)
-        plt.yticks(fontsize=12)
-        plt.xticks(fontsize=12)
-        plt.show()
-
-    elif discretisation == 'pde_continuation':
-        # Check if the diff_eq is a ODE or a PDE
-        if boundary != 'vary_p' and 'vary_q':  # diff_eq is a PDE
-            list_param, param_values = pde_continuation(diff_eq, step_size, vary_par_index, vary_range, L, T, method,
-                                                        boundary, p, q, args)
-            print(list_param)
-            plt.plot(list_param)
-            plt.show()
-        else:
-            list_param, param_values = pde_continuation(diff_eq, step_size, vary_par_index, vary_range, L, T, method,
-                                                        boundary, p, q, args)
-            plt.plot(list_param)
-            plt.show()
-            solution_matrix = pde_solver(diff_eq, L, T, method, boundary, p_func, q_func, args)
-            plt.plot(solution_matrix)
-            plt.show()
-
-    elif discretisation == 'pde_solve':
-        # Set problem parameters/functions
-        # k = 1.0   # diffusion constant
-        # L = 1.0         # length of spatial domain
-        # T = 0.5         # total time to solve for
-
-        # Boundary examples
-        boundary_cond1 = 'homogenous'
-        boundary_cond2 = 'dirichlet'
-        boundary_cond3 = 'neumann'
-        boundary_cond4 = 'periodic'
-        steady_state = True
-
-        solution_matrix = pde_solver(diff_eq, L, T, method, boundary, p_func, q_func, args)
-
-        if steady_state:
-            steady_state_vec = find_steady_state(solution_matrix)
-            print(steady_state_vec)
-
-        sol_vect = solution_matrix[-1][1:-1]
-        plt.plot(sol_vect)
-        plt.show()
-
-    elif discretisation == 'shooting':
-        u_vect = shooting(diff_eq, initial_guess, shooting_conditions, False, orbit, args)
-
-    elif discretisation == 'ode_solve':
-        times = np.linspace(0, T, num=1000)
-        u_values = np.asarray(solve_ode(times, initial_guess, step_size, method, diff_eq, args))
+    return list_of_solutions, param_values
 
 
 if __name__ == '__main__':
 
-    #natural_parameter(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
-    #pseudo_arclength(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
-    #natural_parameter(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [0, 2], True, np.array([0], dtype=float))
-    #pseudo_arclength(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [0, 2], True, np.array([0], dtype=float))
-    #natural_parameter(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
-    #pseudo_arclength(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
+    # Plot the bifurcation diagrams for the cubic equation
+    natural_parameter(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
+    pseudo_arclength(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, np.array([0], dtype=float))
 
+    # Plot the bifurcation diagrams for the hopf bifurcation diagram
+    natural_parameter(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, 0], True, np.array([0], dtype=float))
+    pseudo_arclength(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, 0], True, np.array([0], dtype=float))
+
+    # Plot the bifurcation diagrams for the modified hopf bifurcation diagram
+    natural_parameter(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
+    pseudo_arclength(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, np.array([0], dtype=float))
+
+    # Plot the solutions for varying the boundary condition
     pde_continuation(u_I, 0.1, 0, [3, 3.5], 1, 0.5, 10, 1000, forward_euler, 'vary_p', p, q, np.array([3], dtype=float))
-    '''continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'natural_parameter', rk4,
-                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
-
-    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'pseudo_arclength', rk4,
-                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
-
-    continuation(hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [0, 2], True, 'natural_parameter', rk4,
-                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
-
-    continuation(hopf_bif, np.array([0.5, 0.5]), 0.2, 0, [0, 2], True, 'pseudo_arclength', rk4,
-                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
-
-    continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'natural_parameter', rk4,
-                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
-
-    continuation(mod_hopf_bif, np.array([0.5, 0.5]), 0.1, 0, [2, -1], True, 'pseudo_arclength', rk4,
-                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
-
-
-
-    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'pseudo_arclength', rk4,
-                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
-
-    continuation(alg_cubic, np.array([1]), 0.1, 0, [-2, 2], False, 'natural_parameter', rk4,
-                 'n/a', 0, 0, 0, 0, p, q, False, np.array([0], dtype=float))
-
-    continuation(u_I, np.array([0]), 0.1, 0, [3, 3.5], False, 'pde_continuation', forward_euler,
-                 'vary_p', 1, 0.5, 10, 1000, p, q, False, np.array([3], dtype=float))
-'''
